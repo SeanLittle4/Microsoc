@@ -85,6 +85,30 @@ const SECTIONS = [
           "We're not sure what would happen",
         ],
       },
+      {
+        id: "cyber_insurance",
+        pastaNote: "SEANCE Layer 1 — financial risk transfer reduces existential impact of incidents",
+        text: "Does your business have cyber insurance to help cover costs in the event of a cyberattack?",
+        hint: "Cyber insurance can cover costs like legal fees, customer notification, ransomware payments, and lost revenue.",
+        options: [
+          "Yes — we have a dedicated cyber insurance policy",
+          "Possibly — it may be included in our general business insurance but we haven't confirmed",
+          "No — we don't have cyber insurance",
+          "I'm not sure",
+        ],
+      },
+      {
+        id: "business_continuity",
+        pastaNote: "SEANCE Layer 1 — absence of BCP multiplies recovery time and financial impact",
+        text: "Does your business have a plan for continuing to operate during or after a cyberattack or major IT outage?",
+        hint: "A business continuity plan covers things like: who takes over if a key person is unavailable, how you operate without your systems, and how you communicate with customers during an incident.",
+        options: [
+          "Yes — we have a written business continuity plan",
+          "Informally — we have a rough idea but nothing written down",
+          "No — we haven't thought through how we'd operate without our systems",
+          "I'm not sure",
+        ],     
+      },
     ],
   },
   {
@@ -154,6 +178,52 @@ const SECTIONS = [
           "VPN gateway for remote employee access",
           "None — everything requires being on-site",
           "I'm not sure what's exposed",
+        ],
+      },
+      {
+        id: "asset_inventory",
+        pastaNote: "SEANCE Layer 3 — you cannot protect assets you haven't identified",
+        text: "Does your business maintain an inventory of all devices used for work — computers, phones, tablets, servers?",
+        hint: "An asset inventory is a simple list of every device, who uses it, and what data it stores or accesses.",
+        options: [
+          "Yes — we have an up-to-date list of all devices and their designated users",
+          "Partially — we track some devices but not all",
+          "No — we don't have a formal inventory",
+          "I'm not sure",
+        ],
+      },
+      {
+        id: "unsupported_software",
+        pastaNote: "SEANCE Layer 3 — end-of-life software has no security patches, permanent vulnerability",
+        text: "Does your business use any software or operating systems that are no longer receiving security updates from the manufacturer?",
+        hint: "Examples: Windows 7, Windows 10 (support ends 2025), Office 2013, or any software where the vendor has announced end-of-life.",
+        options: [
+          "No — all software and operating systems we use are actively supported",
+          "Yes — some systems are running end-of-life software",
+          "I'm not sure whether all our software is still supported",
+        ],
+      },
+      {
+        id: "iot_devices",
+        pastaNote: "SEANCE Layer 3 — IoT default credentials are trivially exploited and rarely changed",
+        text: "Does your business use any internet-connected devices beyond computers and phones — such as smart TVs, security cameras, printers, or building access systems?",
+        hint: "These are called IoT (Internet of Things) devices. They often come with default passwords that are never changed, making them easy entry points.",
+        options: [
+          "Yes — and we have changed all default passwords and keep firmware updated",
+          "Yes — but we haven't changed default passwords or checked for updates",
+          "No — we don't use any such devices",
+          "I'm not sure what counts or what we have",
+        ],
+      },
+      {
+        id: "website_security",
+        pastaNote: "SEANCE Layer 3 — unencrypted or unpatched websites expose customers and business data",
+        text: "Does your business have a public-facing website? If so, how is it secured?",
+        options: [
+          "Yes — it uses HTTPS and is regularly updated",
+          "Yes — but we're not sure if it's fully secured or up to date",
+          "Yes — and it accepts customer payments or account logins",
+          "No — we don't have a public website",
         ],
       },
     ],
@@ -235,6 +305,51 @@ const SECTIONS = [
           "I'm not sure if past employees still have access",
         ],
       },
+      {
+        id: "customer_pii",
+        pastaNote: "SEANCE Layer 5 — PII collection creates regulatory and breach notification obligations",
+        text: "Does your business collect and store personal information about customers — such as names, addresses, emails, or payment details?",
+        options: [
+          "Yes — and we have a clear privacy policy and process for handling it",
+          "Yes — but we don't have a formal process for managing or protecting it",
+          "Minimally — we only collect what's absolutely necessary to conduct business",
+          "No — we don't collect or store customer personal information",
+        ],
+      },
+      {
+        id: "customer_breach_notification",
+        pastaNote: "SEANCE Layer 5 — regulatory breach notification deadlines can be as short as 72 hours (GDPR)",
+        text: "If customer data were exposed in a breach, do you have a process for notifying affected customers and any required regulators?",
+        options: [
+          "Yes — we have a documented notification process and know our legal obligations",
+          "Somewhat — we know we'd need to notify people but haven't formalized the steps",
+          "No — we don't have a notification process in place",
+          "I'm not sure what our obligations would be",
+        ],
+      },
+      {
+        id: "data_encryption",
+        pastaNote: "SEANCE Layer 3 — unencrypted data-at-rest is immediately readable if a device is stolen",
+        text: "Is sensitive business data encrypted when it is stored on devices or transmitted between systems?",
+        hint: "Encryption scrambles data so it's unreadable without the correct key — even if a device is stolen, encrypted data cannot be accessed.",
+        options: [
+          "Yes — full disk encryption is enabled on all devices and we use encrypted connections",
+          "Partially — some devices or transfers are encrypted but not all",
+          "No — we don't use encryption for stored or transmitted data",
+          "I'm not sure",
+        ],
+      },
+      {
+        id: "data_disposal",
+        pastaNote: "SEANCE Layer 3 — improperly disposed devices are a common source of data recovery attacks",
+        text: "When your business disposes of old computers, phones, or storage drives, how is the data removed?",
+        options: [
+          "We use a secure wipe tool or professional destruction service before disposal",
+          "We do a standard factory reset or format",
+          "We dispose of devices without specifically wiping them first",
+          "We don't have a formal process for this",
+        ],
+      },
     ],
   },
   {
@@ -274,6 +389,18 @@ const SECTIONS = [
         ],
       },
       {
+        id: "email_domain_auth",
+        pastaNote: "DMARC/SPF/DKIM absence allows attackers to send email appearing to come from your exact domain",
+        text: "Has anyone set up protections to prevent attackers from sending emails that appear to come from your business's email address?",
+        hint: "This is called email authentication (SPF, DKIM, and DMARC). Without it, an attacker can send a fake invoice or payment request and your customers or partners will see your real email address as the sender — with no way to tell it's fraudulent.",
+        options: [
+            "Yes — our IT provider or email admin has confirmed SPF, DKIM, and DMARC are configured",
+            "We have an IT provider but I'm not sure if they've set this up",
+            "No — we manage our own email and haven't configured these protections",
+            "I'm not sure what this is or whether it's in place",
+        ],
+      },
+      {
         id: "wire_transfer_risk",
         pastaNote: "Business Email Compromise (BEC) targeting wire transfers is among the highest-cost SME attacks",
         text: "Does your business ever send payments, wire transfers, or change vendor banking details based on email instructions?",
@@ -307,6 +434,40 @@ const SECTIONS = [
           "Unlikely — employees are trained to verify identity through official channels",
           "Possibly — employees might comply without formal verification",
           "Very likely — we haven't trained employees on this risk",
+          "I'm not sure",
+        ],
+      },
+      {
+        id: "physical_security",
+        pastaNote: "SEANCE Layer 6 — physical access bypasses all digital controls",
+        text: "What physical security controls does your business have in place to protect computers and servers from unauthorized access?",
+        options: [
+          "Locked office with badge or key access — visitors are always supervised",
+          "Locked office but access isn't strictly controlled",
+          "Open environment — physical access to computers is not restricted",
+          "Fully remote — no central office or physical equipment to secure",
+        ],
+      },
+      {
+        id: "visitor_tracking",
+        pastaNote: "SEANCE Layer 6 — untracked external visitors are an insider threat and physical recon vector",
+        text: "Does your business track or log non-employee visitors to your workplace — such as suppliers, contractors, or repair technicians?",
+        options: [
+          "Yes — all visitors sign in and are escorted",
+          "Informally — we generally know who is in the building but don't log it",
+          "No — visitors come and go without a formal process",
+          "We are fully remote — this isn't applicable",
+        ],
+      },
+      {
+        id: "employee_personal_wifi",
+        pastaNote: "SEANCE Layer 2 — unencrypted public Wi-Fi exposes credentials and data in transit",
+        text: "When employees work remotely from public places like coffee shops or airports, do they take precautions with their internet connection?",
+        options: [
+          "Yes — remote employees are required to use a VPN on public Wi-Fi",
+          "We recommend it but don't enforce it",
+          "No — employees connect to public Wi-Fi without a VPN",
+          "We don't have remote employees, or they don't work from public places",
           "I'm not sure",
         ],
       },
@@ -383,6 +544,42 @@ const SECTIONS = [
           "Yes — we have some older applications that connect this way",
           "Yes — several systems rely on these older methods",
           "I'm not sure what authentication methods our software uses",
+        ],
+      },
+      {
+        id: "admin_daily_use",
+        pastaNote: "SEANCE Layer 1 — admin accounts used for daily tasks dramatically increase compromise blast radius",
+        text: "Do the people with administrator access use their admin account for everyday tasks like email and browsing, or do they have a separate regular account for daily use?",
+        hint: "Best practice is to have two accounts — a regular one for daily work and a separate admin account only used when making system changes.",
+        options: [
+          "Admins use a separate regular account for daily tasks",
+          "Admins use their admin account for everything including daily work",
+          "We only have one account per person regardless of access level",
+          "I'm not sure",
+        ],
+      },
+      {
+        id: "firewall",
+        pastaNote: "SEANCE Layer 4 — firewall is the primary network perimeter control; default configs are often insecure",
+        text: "Does your business have a firewall protecting your network, and has it been configured beyond the factory defaults?",
+        hint: "A firewall controls what traffic is allowed in and out of your network. Most routers include one but it needs to be properly configured.",
+        options: [
+          "Yes — we have a firewall and it has been reviewed and configured",
+          "Yes — we have a firewall but it's running on default settings",
+          "We rely on our internet provider's router with no additional configuration",
+          "We are fully remote and don't have a traditional network to protect with a firewall",
+          "I'm not sure if we have a firewall or what its settings are",
+        ],
+      },
+      {
+        id: "guest_wifi",
+        pastaNote: "SEANCE Layer 4 — shared customer/business Wi-Fi allows lateral movement from guest devices",
+        text: "If customers, visitors, or contractors use Wi-Fi at your premises, is it a separate network from the one your business devices use?",
+        options: [
+          "Yes — we have a separate guest network isolated from business systems",
+          "No — customers and business devices share the same Wi-Fi network",
+          "We don't offer Wi-Fi to customers or visitors",
+          "I'm not sure",
         ],
       },
     ],
@@ -530,6 +727,18 @@ const SECTIONS = [
           "$50,000 – $250,000 — painful but recoverable",
           "More than $250,000 — we have financial resilience",
           "We've never thought about this",
+        ],
+      },
+      {
+        id: "power_resilience",
+        pastaNote: "SEANCE Layer 6 — power outages without UPS cause data loss and corrupt systems",
+        text: "Does your business have any protection against sudden power outages — such as an uninterruptible power supply (UPS) for critical equipment?",
+        hint: "A UPS is a battery backup that keeps computers and servers running long enough to save data and shut down safely if power is lost.",
+        options: [
+          "Yes — critical equipment has UPS protection",
+          "No — a power outage would immediately cut off all equipment",
+          "We are fully cloud-based — power outages only affect our internet connection",
+          "I'm not sure",
         ],
       },
     ],
@@ -747,6 +956,116 @@ const ThreatReport = ({ threatModel }) => {
   const scoreColor =
     summary.overall_risk_score >= 70 ? "#e05c5c" :
     summary.overall_risk_score >= 40 ? "#e8a020" : "#60b06e";
+  const buildReportHTML = () => {
+    const severityColors = {
+      critical: "#e05c5c",
+      high: "#e8a020",
+      medium: "#5b8dd4",
+      low: "#60b06e",
+    };
+
+    const findingsHTML = findings.map(f => `
+      <div class="finding" style="border-left: 4px solid ${severityColors[f.severity] || '#5a7a90'}; margin-bottom: 24px; padding: 16px 20px; background: #f9f9f9; border-radius: 4px;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+          <span style="background:${severityColors[f.severity]}22; border:1px solid ${severityColors[f.severity]}66; color:${severityColors[f.severity]}; padding:2px 10px; border-radius:4px; font-size:11px; font-weight:700; text-transform:uppercase; font-family:monospace;">
+            ${f.severity}
+          </span>
+          <strong style="font-size:16px;">${f.name}</strong>
+        </div>
+        <p style="margin:0 0 6px; font-size:12px; color:#666; font-family:monospace;">${f.attack_tactic} · ${f.attack_technique}</p>
+        <p style="margin:0 0 6px; font-size:12px; color:#666; font-family:monospace;">PASTA: ${f.pasta_stage} · Likelihood: ${f.likelihood}</p>
+        <h4 style="margin:12px 0 4px; font-size:13px; color:#333;">Business Impact</h4>
+        <p style="margin:0 0 12px; font-size:14px; line-height:1.6;">${f.business_impact}</p>
+        <h4 style="margin:0 0 4px; font-size:13px; color:#333;">Recommendation</h4>
+        <p style="margin:0 0 12px; font-size:14px; line-height:1.6;">${f.recommendation}</p>
+        ${f.references && f.references.length > 0 ? `
+          <h4 style="margin:0 0 4px; font-size:13px; color:#333;">References</h4>
+          <ul style="margin:0; padding-left:18px;">
+            ${f.references.map(r => `<li><a href="${r}" style="color:#5b8dd4; font-size:13px;">${r}</a></li>`).join("")}
+          </ul>
+        ` : ""}
+      </div>
+    `).join("");
+
+    const html = `<!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8"/>
+    <title>MicroSOC Threat Model Report</title>
+    <style>
+      body { font-family: Georgia, serif; max-width: 900px; margin: 40px auto; padding: 0 24px; color: #1a1a1a; }
+      h1 { font-size: 28px; margin-bottom: 4px; }
+      h2 { font-size: 20px; margin: 32px 0 12px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+      .meta { color: #666; font-size: 13px; font-family: monospace; margin-bottom: 32px; }
+      .scores { display: flex; gap: 20px; margin-bottom: 32px; flex-wrap: wrap; }
+      .score-box { padding: 12px 20px; border-radius: 8px; text-align: center; border: 1px solid #ddd; }
+      .score-box .num { font-size: 28px; font-weight: 700; font-family: monospace; }
+      .score-box .label { font-size: 11px; font-family: monospace; text-transform: uppercase; color: #666; }
+    </style>
+  </head>
+  <body>
+    <h1>MicroSOC Threat Model Report</h1>
+    <p class="meta">Generated: ${new Date().toLocaleString()} · PASTA + MITRE ATT&CK Framework</p>
+
+    <h2>Risk Summary</h2>
+    <div class="scores">
+      <div class="score-box">
+        <div class="num" style="color:${summary.overall_risk_score >= 70 ? '#e05c5c' : summary.overall_risk_score >= 40 ? '#e8a020' : '#60b06e'}">
+          ${summary.overall_risk_score}
+        </div>
+        <div class="label">Risk Score / 100</div>
+      </div>
+      <div class="score-box">
+        <div class="num" style="color:#e05c5c">${summary.critical}</div>
+        <div class="label">Critical</div>
+      </div>
+      <div class="score-box">
+        <div class="num" style="color:#e8a020">${summary.high}</div>
+        <div class="label">High</div>
+      </div>
+      <div class="score-box">
+        <div class="num" style="color:#5b8dd4">${summary.medium || 0}</div>
+        <div class="label">Medium</div>
+      </div>
+    </div>
+
+    <h2>Findings (${findings.length})</h2>
+    ${findingsHTML}
+
+    <p style="margin-top:48px; font-size:12px; color:#999; font-family:monospace;">
+      Generated by MicroSOC · PASTA + MITRE ATT&CK · All responses processed locally
+    </p>
+  </body>
+  </html>`;
+
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `microsoc-threat-report-${new Date().toISOString().split("T")[0]}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadHTML = () => {
+    const html = buildReportHTML();
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `microsoc-threat-report-${new Date().toISOString().split("T")[0]}.html`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const downloadPDF = () => {
+    const html = buildReportHTML();
+    const win = window.open("", "_blank");
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 500);
+  };
 
   return (
     <div style={{ marginTop: 36, paddingTop: 36, borderTop: "1px solid #141e28" }}>
@@ -788,6 +1107,26 @@ const ThreatReport = ({ threatModel }) => {
         {findings.length} Finding{findings.length !== 1 ? "s" : ""} — click any row to expand
       </div>
       {findings.map(f => <FindingCard key={f.id} finding={f} />)}
+      <div style={{ display: "flex", gap: 12, marginTop: 28, paddingTop: 24, borderTop: "1px solid #141e28" }}>
+        <button
+          onClick={downloadHTML}
+          style={{
+            padding: "10px 22px", borderRadius: 8, border: "1.5px solid #5b8dd4",
+            background: "transparent", color: "#5b8dd4", cursor: "pointer",
+            fontSize: 14, fontFamily: "Georgia, serif",
+          }}>
+          ↓ Download HTML Report
+        </button>
+        <button
+          onClick={downloadPDF}
+          style={{
+            padding: "10px 22px", borderRadius: 8, border: "none",
+            background: "#5b8dd4", color: "#0b1117", cursor: "pointer",
+            fontSize: 14, fontWeight: 700, fontFamily: "Georgia, serif",
+          }}>
+          ↓ Save as PDF
+        </button>
+      </div>
     </div>
   );
 };
@@ -957,7 +1296,7 @@ export default function App() {
       transform: visible ? "none" : "translateY(8px)",
       transition: "opacity 0.5s, transform 0.5s",
     }}>
-      <div style={{ maxWidth: 740, margin: "0 auto" }}>
+      <div style={{ maxWidth: 900, margin: "0 auto" }}>
 
         {/* Header */}
         <div style={{ marginBottom: 52 }}>
@@ -973,7 +1312,7 @@ export default function App() {
           <h1 style={{ fontSize: 38, color: "#e8ddd0", margin: "0 0 4px", lineHeight: 1.1, fontWeight: 700, letterSpacing: "-0.5px" }}>
             Cyber Risk Survey
           </h1>
-          <p style={{ color: "#3a5568", fontSize: 16, margin: "8px 0 0", lineHeight: 1.7, maxWidth: 540 }}>
+          <p style={{ color: "#3a5568", fontSize: 16, margin: "8px 0 0", lineHeight: 1.7, maxWidth: 800 }}>
             A <strong style={{ color: "#5a7a90" }}>PASTA + MITRE ATT&CK</strong> assessment that translates your business environment into a prioritized risk profile. No technical knowledge required.
           </p>
         </div>
