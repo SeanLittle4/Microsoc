@@ -1,6 +1,24 @@
 import { useState, useEffect } from "react";
+import GordonLoebWalkthrough from './components/GordonLoebWalkthrough';
+import MisconfigGuide from './components/MisconfigGuide';
 
 // ─── PASTA + ATT&CK SURVEY DATA ───────────────────────────────────────────────
+
+// ─── Design tokens ──────────────────────────────
+
+const BG        = "#0b1117";
+const CARD      = "#0e1822";
+const BORDER    = "#141e28";
+const BORDER2   = "#1e2e3e";
+const GOLD      = "#c8922a";
+const TEXT_PRI  = "#e8ddd0";
+const TEXT_SEC  = "#8a9eb0";
+const TEXT_DIM  = "#8a9eb0";
+const TEXT_MUT  = "#2e4458";
+const CRIT      = "#e05c5c";
+const HIGH_C    = "#e8a020";
+const MED_C     = "#5b8dd4";
+const LOW_C     = "#60b06e";
 
 const SECTIONS = [
   {
@@ -238,7 +256,7 @@ const SECTIONS = [
     icon: "III",
     title: "Data Flows & Trust Boundaries",
     subtitle:
-      "PASTA Stage 3 maps every path data travels and every person or system that touches it. These are your trust boundaries — each one is a potential entry point for TA0001 and TA0006.",
+      "PASTA Stage 3 maps every path data travels and every person or system that touches it. These are your trust boundaries — each one is a potential entry point for initial access.",
     questions: [
       {
         id: "data_movement",
@@ -821,7 +839,7 @@ const Question = ({ q, qi, accentColor, answer, onAnswer, onToggle }) => (
           Q{qi + 1}
         </span>
         {q.pastaNote && (
-          <span style={{ color: "#2e4458", fontSize: 11, fontFamily: "monospace", fontStyle: "italic" }}>
+          <span style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace", fontStyle: "italic" }}>
             ↳ {q.pastaNote}
           </span>
         )}
@@ -835,7 +853,7 @@ const Question = ({ q, qi, accentColor, answer, onAnswer, onToggle }) => (
         </p>
       )}
       {q.multi && (
-        <p style={{ color: "#2e4458", fontSize: 11, fontFamily: "monospace", margin: "0 0 10px", letterSpacing: "0.08em" }}>
+        <p style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace", margin: "0 0 10px", letterSpacing: "0.08em" }}>
           SELECT ALL THAT APPLY
         </p>
       )}
@@ -872,11 +890,12 @@ const FindingCard = ({ finding }) => {
       overflow: "hidden",
     }}>
       <button
-        onClick={() => setExpanded(e => !e)}
+        onMouseDown={e => { e.preventDefault(); setExpanded(ex => !ex); }}
         style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
           width: "100%", padding: "14px 18px", background: "transparent",
           border: "none", cursor: "pointer", textAlign: "left", gap: 12,
+          userSelect: "none",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 12, flex: 1, minWidth: 0 }}>
@@ -893,10 +912,10 @@ const FindingCard = ({ finding }) => {
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-          <span style={{ color: "#2e4458", fontSize: 10, fontFamily: "monospace" }}>
+          <span style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace" }}>
             {finding.attack_technique}
           </span>
-          <span style={{ color: "#2e4458", fontSize: 12 }}>{expanded ? "▲" : "▼"}</span>
+          <span style={{ color: TEXT_MUT, fontSize: 12 }}>{expanded ? "▲" : "▼"}</span>
         </div>
       </button>
 
@@ -904,7 +923,7 @@ const FindingCard = ({ finding }) => {
         <div style={{ padding: "0 18px 18px", borderTop: "1px solid #141e28" }}>
           <div style={{ paddingTop: 14, display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
-              <div style={{ color: "#2e4458", fontSize: 10, fontFamily: "monospace", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>
                 Business Impact
               </div>
               <p style={{ color: "#8a9eb0", fontSize: 14, fontFamily: "Georgia, serif", lineHeight: 1.6, margin: 0 }}>
@@ -912,7 +931,7 @@ const FindingCard = ({ finding }) => {
               </p>
             </div>
             <div>
-              <div style={{ color: "#2e4458", fontSize: 10, fontFamily: "monospace", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>
                 Recommendation
               </div>
               <p style={{ color: "#8a9eb0", fontSize: 14, fontFamily: "Georgia, serif", lineHeight: 1.6, margin: 0 }}>
@@ -920,14 +939,14 @@ const FindingCard = ({ finding }) => {
               </p>
             </div>
             <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
-              <span style={{ color: "#2e4458", fontSize: 11, fontFamily: "monospace" }}>
+              <span style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace" }}>
                 Tactic: <span style={{ color: "#4a6278" }}>{finding.attack_tactic}</span>
               </span>
-              <span style={{ color: "#2e4458", fontSize: 11, fontFamily: "monospace" }}>
+              <span style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace" }}>
                 PASTA: <span style={{ color: "#4a6278" }}>{finding.pasta_stage}</span>
               </span>
               {finding.likelihood && (
-                <span style={{ color: "#2e4458", fontSize: 11, fontFamily: "monospace" }}>
+                <span style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace" }}>
                   Likelihood: <span style={{ color: "#4a6278" }}>{finding.likelihood}</span>
                 </span>
               )}
@@ -936,7 +955,7 @@ const FindingCard = ({ finding }) => {
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {finding.references.map(ref => (
                   <a key={ref} href={ref} target="_blank" rel="noreferrer" style={{
-                    color: "#2e4458", fontSize: 11, fontFamily: "monospace",
+                    color: TEXT_MUT, fontSize: 11, fontFamily: "monospace",
                     textDecoration: "underline", textDecorationColor: "#1e2e3e",
                   }}>
                     {ref.replace("https://", "")}
@@ -951,7 +970,7 @@ const FindingCard = ({ finding }) => {
   );
 };
 
-const ThreatReport = ({ threatModel }) => {
+const ThreatReport = ({ threatModel, onLaunchEconomic, onLaunchMisconfig }) => {
   const { summary, findings } = threatModel;
   const scoreColor =
     summary.overall_risk_score >= 70 ? "#e05c5c" :
@@ -1070,7 +1089,7 @@ const ThreatReport = ({ threatModel }) => {
   return (
     <div style={{ marginTop: 36, paddingTop: 36, borderTop: "1px solid #141e28" }}>
       <div style={{ marginBottom: 28 }}>
-        <div style={{ color: "#2e4458", fontSize: 11, fontFamily: "monospace", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        <div style={{ color: TEXT_DIM, fontSize: 11, fontFamily: "monospace", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>
           Threat Model Results
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
@@ -1078,7 +1097,7 @@ const ThreatReport = ({ threatModel }) => {
             <div style={{ fontSize: 42, fontWeight: 700, color: scoreColor, fontFamily: "monospace", lineHeight: 1 }}>
               {summary.overall_risk_score}
             </div>
-            <div style={{ color: "#2e4458", fontSize: 10, fontFamily: "monospace", marginTop: 4 }}>RISK SCORE / 100</div>
+            <div style={{ color: TEXT_DIM, fontSize: 10, fontFamily: "monospace", marginTop: 4 }}>RISK SCORE / 100</div>
           </div>
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
             {summary.critical > 0 && (
@@ -1103,7 +1122,7 @@ const ThreatReport = ({ threatModel }) => {
         </div>
       </div>
 
-      <div style={{ color: "#2e4458", fontSize: 10, fontFamily: "monospace", marginBottom: 12, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+      <div style={{ color: TEXT_DIM, fontSize: 10, fontFamily: "monospace", marginBottom: 12, letterSpacing: "0.08em", textTransform: "uppercase" }}>
         {findings.length} Finding{findings.length !== 1 ? "s" : ""} — click any row to expand
       </div>
       {findings.map(f => <FindingCard key={f.id} finding={f} />)}
@@ -1126,6 +1145,29 @@ const ThreatReport = ({ threatModel }) => {
           }}>
           ↓ Save as PDF
         </button>
+        {onLaunchEconomic && (
+          <button
+            onClick={onLaunchEconomic}
+            style={{
+              padding: "10px 22px", borderRadius: 8, border: "none",
+              background: "#c8922a", color: "#0b1117", cursor: "pointer",
+              fontSize: 14, fontWeight: 700, fontFamily: "Georgia, serif",
+              boxShadow: "0 2px 16px #c8922a44",
+            }}>
+            → Economic Analysis (Gordon–Loeb)
+          </button>
+        )}
+        {onLaunchMisconfig && (
+          <button
+            onClick={onLaunchMisconfig}
+            style={{
+              padding: "10px 22px", borderRadius: 8, border: "1.5px solid #4ea8a0",
+              background: "transparent", color: "#4ea8a0", cursor: "pointer",
+              fontSize: 14, fontFamily: "Georgia, serif",
+            }}>
+            → Misconfiguration Guide
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1133,7 +1175,7 @@ const ThreatReport = ({ threatModel }) => {
 
 // ─── SUMMARY VIEW ─────────────────────────────────────────────────────────────
 
-const SummaryView = ({ answers, threatModel, onRestart }) => {
+const SummaryView = ({ answers, threatModel, onRestart, onLaunchEconomic, onLaunchMisconfig }) => {
   const all = SECTIONS.flatMap(s => s.questions.map(q => ({ ...q, sec: s })));
   const answered = all.filter(q => {
     const a = answers[q.id];
@@ -1158,13 +1200,13 @@ const SummaryView = ({ answers, threatModel, onRestart }) => {
 
       {/* ── Threat report (shown when backend returns findings) ── */}
       {threatModel ? (
-        <ThreatReport threatModel={threatModel} />
+        <ThreatReport threatModel={threatModel} onLaunchEconomic={onLaunchEconomic} onLaunchMisconfig={onLaunchMisconfig} />
       ) : (
         <div style={{
           padding: "24px", borderRadius: 8, border: "1px dashed #1e2e3e",
           textAlign: "center", marginBottom: 28,
         }}>
-          <p style={{ color: "#2e4458", fontFamily: "monospace", fontSize: 13, margin: 0 }}>
+          <p style={{ color: TEXT_DIM, fontFamily: "monospace", fontSize: 13, margin: 0 }}>
             No threat model data — make sure the backend is running and reachable at{" "}
             <code style={{ color: "#4a6278" }}>http://localhost:5000/api/survey</code>
           </p>
@@ -1173,7 +1215,7 @@ const SummaryView = ({ answers, threatModel, onRestart }) => {
 
       {/* ── Raw answers summary ── */}
       <div style={{ marginTop: 36, paddingTop: 36, borderTop: "1px solid #141e28" }}>
-        <div style={{ color: "#2e4458", fontSize: 11, fontFamily: "monospace", marginBottom: 20, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        <div style={{ color: TEXT_DIM, fontSize: 11, fontFamily: "monospace", marginBottom: 20, letterSpacing: "0.1em", textTransform: "uppercase" }}>
           Survey Responses
         </div>
         {SECTIONS.map(sec => {
@@ -1204,7 +1246,7 @@ const SummaryView = ({ answers, threatModel, onRestart }) => {
                   background: "#0e1822", border: "1px solid #141e28", borderRadius: 8,
                   padding: "12px 16px", marginBottom: 8,
                 }}>
-                  <div style={{ color: "#2e4458", fontSize: 12, fontFamily: "monospace", marginBottom: 5 }}>{q.text}</div>
+                  <div style={{ color: TEXT_DIM, fontSize: 12, fontFamily: "monospace", marginBottom: 5 }}>{q.text}</div>
                   <div style={{ color: sec.color, fontSize: 14, fontFamily: "Georgia, serif", fontWeight: 700 }}>
                     {Array.isArray(answers[q.id]) ? answers[q.id].join(" · ") : answers[q.id]}
                   </div>
@@ -1240,6 +1282,8 @@ export default function App() {
   const [threatModel, setThreatModel] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showEconomic, setShowEconomic] = useState(false);
+  const [showMisconfig, setShowMisconfig] = useState(false);
   // ───────────────────────────────────────────────────────────────────────────
 
   useEffect(() => { setTimeout(() => setVisible(true), 60); }, []);
@@ -1282,6 +1326,25 @@ export default function App() {
   };
   // ───────────────────────────────────────────────────────────────────────────
 
+  if (showEconomic && threatModel) {
+    return (
+      <GordonLoebWalkthrough
+        threatModel={threatModel}
+        surveyAnswers={answers}
+        onBack={() => setShowEconomic(false)}
+      />
+    );
+  }
+
+  if (showMisconfig) {
+    return (
+      <MisconfigGuide
+        threatModel={threatModel}
+        onBack={() => setShowMisconfig(false)}
+      />
+    );
+  }
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -1305,7 +1368,7 @@ export default function App() {
               width: 8, height: 8, borderRadius: "50%", background: "#c8922a",
               boxShadow: "0 0 10px #c8922a88",
             }} />
-            <span style={{ color: "#2e4458", fontSize: 11, fontFamily: "monospace", letterSpacing: "0.16em", textTransform: "uppercase" }}>
+            <span style={{ color: TEXT_DIM, fontSize: 11, fontFamily: "monospace", letterSpacing: "0.16em", textTransform: "uppercase" }}>
               MicroSOC · Business Risk Assessment
             </span>
           </div>
@@ -1347,7 +1410,7 @@ export default function App() {
                         PASTA STAGE {sec.pastaStage}
                       </span>
                       <span style={{ color: "#1e2e3e", fontSize: 10, fontFamily: "monospace" }}>·</span>
-                      <span style={{ color: "#2e4458", fontSize: 10, fontFamily: "monospace" }}>{sec.pastaLabel}</span>
+                      <span style={{ color: TEXT_DIM, fontSize: 10, fontFamily: "monospace" }}>{sec.pastaLabel}</span>
                     </div>
                     <h2 style={{ color: "#e8ddd0", fontSize: 21, fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
                       {sec.title}
@@ -1355,7 +1418,7 @@ export default function App() {
                   </div>
                 </div>
 
-                <p style={{ color: "#3a5568", fontSize: 14, lineHeight: 1.7, margin: "0 0 12px", paddingLeft: 60 }}>
+                <p style={{ color: TEXT_DIM, fontSize: 14, lineHeight: 1.7, margin: "0 0 12px", paddingLeft: 60 }}>
                   {sec.subtitle}
                 </p>
 
@@ -1394,7 +1457,7 @@ export default function App() {
                 </button>
 
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ color: "#2e4458", fontSize: 11, fontFamily: "monospace" }}>
+                  <div style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace" }}>
                     {answeredCount}/{sec.questions.length} answered
                   </div>
                   {!canAdvance && answeredCount > 0 && (
@@ -1433,7 +1496,9 @@ export default function App() {
             <SummaryView
               answers={answers}
               threatModel={threatModel}
-              onRestart={() => { setDone(false); setSIdx(0); setAnswers({}); setThreatModel(null); setError(null); }}
+              onRestart={() => { setDone(false); setSIdx(0); setAnswers({}); setThreatModel(null); setError(null); setShowEconomic(false); setShowMisconfig(false); }}
+              onLaunchEconomic={() => setShowEconomic(true)}
+              onLaunchMisconfig={() => setShowMisconfig(true)}
             />
           )}
         </div>
