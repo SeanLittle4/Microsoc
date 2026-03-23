@@ -1309,7 +1309,7 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/survey", {
+      const res = await fetch("https://microsoc-api.onrender.com/api/survey", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ responses: answers }),
