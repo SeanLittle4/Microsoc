@@ -1208,7 +1208,7 @@ const SummaryView = ({ answers, threatModel, onRestart, onLaunchEconomic, onLaun
         }}>
           <p style={{ color: TEXT_DIM, fontFamily: "monospace", fontSize: 13, margin: 0 }}>
             No threat model data — make sure the backend is running and reachable at{" "}
-            <code style={{ color: "#4a6278" }}>http://localhost:5000/api/survey</code>
+            <code style={{ color: "#4a6278" }}>https://microsoc.onrender.com/api/survey</code>
           </p>
         </div>
       )}
