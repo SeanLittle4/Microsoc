@@ -43,7 +43,7 @@ export default function App() {
     );
   }
 
-  if (view === 'economic' && lastThreatModel) {
+  if (view === 'economic') {
     return (
       <GordonLoebWalkthrough
         threatModel={lastThreatModel}
@@ -57,7 +57,7 @@ export default function App() {
     <Home
       onStartSurvey={() => { setResumeResults(false); setView('survey'); }}
       onOpenMisconfig={() => setView('misconfig')}
-      onOpenEconomic={() => { if (lastThreatModel) setView('economic'); }}
+      onOpenEconomic={() => {setView('economic'); }}
       lastThreatModel={lastThreatModel}
       onViewLastResults={() => { setResumeResults(true); setView('survey'); }}
     />

@@ -606,7 +606,7 @@ export default function MisconfigGuide({ threatModel, onBack }) {
                 boxShadow: `0 2px 12px ${GOLD}44`,
               }}
             >
-              ↓ Download Full Reference (PDF-ready)
+              ↓ Download Full Reference (PDF)
             </button>
           </div>
         )}

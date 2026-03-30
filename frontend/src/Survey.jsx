@@ -26,17 +26,17 @@ const SECTIONS = [
     pastaStage: 1,
     pastaLabel: "Business Objectives",
     pastaDesc: "Define what must be protected and why it matters",
-    attackTactics: ["TA0043 – Reconnaissance"],
+    attackTactics: ["MITRE ATT&CK TA0043 – Reconnaissance"],
     color: "#c8922a",
     icon: "I",
     title: "Business Objectives & Priorities",
     subtitle:
-      "PASTA begins by anchoring the threat model in your business goals — not technology. Attackers conduct reconnaissance (TA0043) to understand exactly what you value before they strike.",
+      "PASTA begins by anchoring the threat model in your business goals, not technology. Attackers conduct reconnaissance to understand exactly what you value before they strike.",
     questions: [
       {
         id: "industry",
         pastaNote: "Determines regulatory exposure and attacker motivation profile",
-        text: "What industry is your business in?",
+        text: "In what industry is your business?",
         options: [
           "Healthcare or medical services",
           "Finance, accounting, or insurance",
@@ -63,9 +63,9 @@ const SECTIONS = [
       },
       {
         id: "crown_jewel",
-        pastaNote: "Identifies primary business asset — the target attackers optimize for",
-        text: "If a cyberattack succeeded tomorrow, which outcome would be most devastating to your business?",
-        hint: "Think about what would force you to close, face lawsuits, or lose your customers' trust permanently.",
+        pastaNote: "Identifies primary business asset — the targets most prized by attackers",
+        text: "If a cyberattack succeeded tomorrow, which outcome would be most harmful to your business?",
+        hint: "Think about what would force you to close, face lawsuits, lose your customers' trust, or damage your corporate reputation.",
         options: [
           "Theft of customer data — lawsuits, lost trust, regulatory fines",
           "Loss of access to our systems — unable to operate for days or weeks",
@@ -73,19 +73,19 @@ const SECTIONS = [
           "Exposure of confidential contracts, pricing, or business strategies",
           "Reputational damage from public breach notification",
           "Regulatory penalties for non-compliance with data protection laws",
-          "I'm not sure — we haven't thought through the worst case",
+          "I'm not sure, we haven't thought through the worst case",
         ],
       },
       {
         id: "compliance",
         pastaNote: "Maps to regulatory threat scenarios with elevated attacker motivation",
         text: "Is your business required by law, contract, or industry rules to protect certain data?",
-        hint: "For example: HIPAA for healthcare, PCI-DSS for card payments, state privacy laws like CCPA.",
+        hint: "For example: HIPAA for healthcare, PCI-DSS for card payments, or DFARS for US defense contractors.",
         options: [
           "Yes — healthcare data regulations (HIPAA)",
           "Yes — payment card regulations (PCI-DSS)",
           "Yes — state privacy laws (e.g., CCPA, VCDPA)",
-          "Yes — contractual requirements from customers or partners",
+          "Yes — contractual requirements from government, customers, or partners",
           "Yes — multiple of the above",
           "No known regulatory requirements",
           "I'm not sure",
@@ -105,7 +105,7 @@ const SECTIONS = [
       },
       {
         id: "cyber_insurance",
-        pastaNote: "SEANCE Layer 1 — financial risk transfer reduces existential impact of incidents",
+        pastaNote: "Financial risk transfer reduces existential impact of incidents",
         text: "Does your business have cyber insurance to help cover costs in the event of a cyberattack?",
         hint: "Cyber insurance can cover costs like legal fees, customer notification, ransomware payments, and lost revenue.",
         options: [
@@ -117,7 +117,7 @@ const SECTIONS = [
       },
       {
         id: "business_continuity",
-        pastaNote: "SEANCE Layer 1 — absence of BCP multiplies recovery time and financial impact",
+        pastaNote: "Absence of BCP multiplies recovery time and financial impact",
         text: "Does your business have a plan for continuing to operate during or after a cyberattack or major IT outage?",
         hint: "A business continuity plan covers things like: who takes over if a key person is unavailable, how you operate without your systems, and how you communicate with customers during an incident.",
         options: [
@@ -134,7 +134,7 @@ const SECTIONS = [
     pastaStage: 2,
     pastaLabel: "Technical Scope",
     pastaDesc: "Map the systems and platforms that support business operations",
-    attackTactics: ["TA0043 – Reconnaissance", "TA0001 – Initial Access"],
+    attackTactics: ["MITRE ATT&CK TA0043 – Reconnaissance", "MITRE ATT&CK TA0001 – Initial Access"],
     color: "#a87fc2",
     icon: "II",
     title: "Your Technology Environment",
@@ -144,13 +144,13 @@ const SECTIONS = [
       {
         id: "infra_model",
         pastaNote: "Determines whether threat scenarios are cloud-native, hybrid, or on-prem",
-        text: "How is your business technology primarily set up?",
+        text: "How is your business technology primarily configured?",
         options: [
-          "Everything is in the cloud — no on-site servers (e.g., Microsoft 365, Google Workspace)",
+          "Everything is in the cloud, no on-site servers (e.g., Microsoft 365, Google Workspace)",
           "Primarily on-site servers and infrastructure",
-          "A mix — some systems on-site, some in the cloud (hybrid)",
+          "A mix, some systems on-site, some in the cloud (hybrid)",
           "We rely almost entirely on third-party software managed by vendors",
-          "I'm not sure how to categorize our setup",
+          "I'm not sure how to categorize our configuration",
         ],
       },
       {
@@ -200,8 +200,8 @@ const SECTIONS = [
       },
       {
         id: "asset_inventory",
-        pastaNote: "SEANCE Layer 3 — you cannot protect assets you haven't identified",
-        text: "Does your business maintain an inventory of all devices used for work — computers, phones, tablets, servers?",
+        pastaNote: "You cannot protect assets you haven't identified",
+        text: "Does your business maintain an inventory of all IT devices used for work: computers, phones, tablets, servers, external storage devices, etc...?",
         hint: "An asset inventory is a simple list of every device, who uses it, and what data it stores or accesses.",
         options: [
           "Yes — we have an up-to-date list of all devices and their designated users",
@@ -212,18 +212,18 @@ const SECTIONS = [
       },
       {
         id: "unsupported_software",
-        pastaNote: "SEANCE Layer 3 — end-of-life software has no security patches, permanent vulnerability",
+        pastaNote: "End-of-life software has no security patches, permanent vulnerability",
         text: "Does your business use any software or operating systems that are no longer receiving security updates from the manufacturer?",
         hint: "Examples: Windows 7, Windows 10 (support ends 2025), Office 2013, or any software where the vendor has announced end-of-life.",
         options: [
           "No — all software and operating systems we use are actively supported",
           "Yes — some systems are running end-of-life software",
-          "I'm not sure whether all our software is still supported",
+          "I'm not sure if all our software is still supported",
         ],
       },
       {
         id: "iot_devices",
-        pastaNote: "SEANCE Layer 3 — IoT default credentials are trivially exploited and rarely changed",
+        pastaNote: "IoT default credentials are trivially exploited and rarely changed",
         text: "Does your business use any internet-connected devices beyond computers and phones — such as smart TVs, security cameras, printers, or building access systems?",
         hint: "These are called IoT (Internet of Things) devices. They often come with default passwords that are never changed, making them easy entry points.",
         options: [
@@ -235,7 +235,7 @@ const SECTIONS = [
       },
       {
         id: "website_security",
-        pastaNote: "SEANCE Layer 3 — unencrypted or unpatched websites expose customers and business data",
+        pastaNote: "Unencrypted or unpatched websites expose customers and business data",
         text: "Does your business have a public-facing website? If so, how is it secured?",
         options: [
           "Yes — it uses HTTPS and is regularly updated",
@@ -325,7 +325,7 @@ const SECTIONS = [
       },
       {
         id: "customer_pii",
-        pastaNote: "SEANCE Layer 5 — PII collection creates regulatory and breach notification obligations",
+        pastaNote: "PII collection creates regulatory and breach notification obligations",
         text: "Does your business collect and store personal information about customers — such as names, addresses, emails, or payment details?",
         options: [
           "Yes — and we have a clear privacy policy and process for handling it",
@@ -336,7 +336,7 @@ const SECTIONS = [
       },
       {
         id: "customer_breach_notification",
-        pastaNote: "SEANCE Layer 5 — regulatory breach notification deadlines can be as short as 72 hours (GDPR)",
+        pastaNote: "regulatory breach notification deadlines can be as short as 72 hours (GDPR)",
         text: "If customer data were exposed in a breach, do you have a process for notifying affected customers and any required regulators?",
         options: [
           "Yes — we have a documented notification process and know our legal obligations",
@@ -347,7 +347,7 @@ const SECTIONS = [
       },
       {
         id: "data_encryption",
-        pastaNote: "SEANCE Layer 3 — unencrypted data-at-rest is immediately readable if a device is stolen",
+        pastaNote: "Unencrypted data-at-rest is immediately readable if a device is stolen",
         text: "Is sensitive business data encrypted when it is stored on devices or transmitted between systems?",
         hint: "Encryption scrambles data so it's unreadable without the correct key — even if a device is stolen, encrypted data cannot be accessed.",
         options: [
@@ -359,7 +359,7 @@ const SECTIONS = [
       },
       {
         id: "data_disposal",
-        pastaNote: "SEANCE Layer 3 — improperly disposed devices are a common source of data recovery attacks",
+        pastaNote: "Improperly disposed devices are a common source of data recovery attacks",
         text: "When your business disposes of old computers, phones, or storage drives, how is the data removed?",
         options: [
           "We use a secure wipe tool or professional destruction service before disposal",
@@ -457,7 +457,7 @@ const SECTIONS = [
       },
       {
         id: "physical_security",
-        pastaNote: "SEANCE Layer 6 — physical access bypasses all digital controls",
+        pastaNote: "Physical access bypasses all digital controls",
         text: "What physical security controls does your business have in place to protect computers and servers from unauthorized access?",
         options: [
           "Locked office with badge or key access — visitors are always supervised",
@@ -468,7 +468,7 @@ const SECTIONS = [
       },
       {
         id: "visitor_tracking",
-        pastaNote: "SEANCE Layer 6 — untracked external visitors are an insider threat and physical recon vector",
+        pastaNote: "Untracked external visitors are an insider threat and physical recon vector",
         text: "Does your business track or log non-employee visitors to your workplace — such as suppliers, contractors, or repair technicians?",
         options: [
           "Yes — all visitors sign in and are escorted",
@@ -479,7 +479,7 @@ const SECTIONS = [
       },
       {
         id: "employee_personal_wifi",
-        pastaNote: "SEANCE Layer 2 — unencrypted public Wi-Fi exposes credentials and data in transit",
+        pastaNote: "Unencrypted public Wi-Fi exposes credentials and data in transit",
         text: "When employees work remotely from public places like coffee shops or airports, do they take precautions with their internet connection?",
         options: [
           "Yes — remote employees are required to use a VPN on public Wi-Fi",
@@ -505,8 +505,8 @@ const SECTIONS = [
     questions: [
       {
         id: "mfa",
-        pastaNote: "Absent MFA is exploited in >80% of cloud identity compromises",
-        text: "Is two-step verification (also called MFA or 2FA) required to log into your most critical systems?",
+        pastaNote: "Lack of MFA enforcement is exploited in >80% of cloud identity compromises",
+        text: "Is multi-factor verification (also called MFA or 2FA) required to log into your most critical systems?",
         hint: "MFA means logging in requires both a password AND a second step — like a code sent to your phone.",
         options: [
           "Yes — required for all accounts without exception",
@@ -566,7 +566,7 @@ const SECTIONS = [
       },
       {
         id: "admin_daily_use",
-        pastaNote: "SEANCE Layer 1 — admin accounts used for daily tasks dramatically increase compromise blast radius",
+        pastaNote: "Admin accounts used for daily tasks dramatically increase compromise blast radius",
         text: "Do the people with administrator access use their admin account for everyday tasks like email and browsing, or do they have a separate regular account for daily use?",
         hint: "Best practice is to have two accounts — a regular one for daily work and a separate admin account only used when making system changes.",
         options: [
@@ -578,7 +578,7 @@ const SECTIONS = [
       },
       {
         id: "firewall",
-        pastaNote: "SEANCE Layer 4 — firewall is the primary network perimeter control; default configs are often insecure",
+        pastaNote: "Firewall is the primary network perimeter control; default configs are often insecure",
         text: "Does your business have a firewall protecting your network, and has it been configured beyond the factory defaults?",
         hint: "A firewall controls what traffic is allowed in and out of your network. Most routers include one but it needs to be properly configured.",
         options: [
@@ -591,7 +591,7 @@ const SECTIONS = [
       },
       {
         id: "guest_wifi",
-        pastaNote: "SEANCE Layer 4 — shared customer/business Wi-Fi allows lateral movement from guest devices",
+        pastaNote: "Shared customer/business Wi-Fi allows lateral movement from guest devices",
         text: "If customers, visitors, or contractors use Wi-Fi at your premises, is it a separate network from the one your business devices use?",
         options: [
           "Yes — we have a separate guest network isolated from business systems",
@@ -749,7 +749,7 @@ const SECTIONS = [
       },
       {
         id: "power_resilience",
-        pastaNote: "SEANCE Layer 6 — power outages without UPS cause data loss and corrupt systems",
+        pastaNote: "Power outages without UPS cause data loss and corrupt systems",
         text: "Does your business have any protection against sudden power outages — such as an uninterruptible power supply (UPS) for critical equipment?",
         hint: "A UPS is a battery backup that keeps computers and servers running long enough to save data and shut down safely if power is lost.",
         options: [
@@ -1272,7 +1272,7 @@ const SummaryView = ({ answers, threatModel, onRestart, onLaunchEconomic, onLaun
 
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 
-export default function App() {
+export default function App({onGoHome}) {
   const [sIdx, setSIdx] = useState(0);
   const [answers, setAnswers] = useState({});
   const [done, setDone] = useState(false);
@@ -1371,6 +1371,16 @@ export default function App() {
             <span style={{ color: TEXT_DIM, fontSize: 11, fontFamily: "monospace", letterSpacing: "0.16em", textTransform: "uppercase" }}>
               MicroSOC · Business Risk Assessment
             </span>
+              {onGoHome && (
+                <button onClick={onGoHome} style={{
+                  marginLeft: "auto",
+                  background: "none", border: "1px solid #1e2e3e", borderRadius: 6,
+                  color: "#3a5568", cursor: "pointer", fontSize: 12, fontFamily: "monospace",
+                  padding: "5px 12px",
+                }}>
+                  ← Home
+                </button>
+              )}
           </div>
           <h1 style={{ fontSize: 38, color: "#e8ddd0", margin: "0 0 4px", lineHeight: 1.1, fontWeight: 700, letterSpacing: "-0.5px" }}>
             Cyber Risk Survey

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-// ─── Design tokens — exact match with Survey.jsx ──────────────────────────────
+// ─── Design tokens ──────────────────────────────
 const BG        = "#0b1117";
 const CARD      = "#0e1822";
 const BORDER    = "#141e28";
@@ -46,11 +46,11 @@ const MODULES = [
   {
     num: "III",
     id: "misconfig",
-    label: "Misconfig Guide",
-    tag: "MODULE 5",
+    label: "Threat Reference Guide",
+    tag: "MODULE 3",
     tagColor: "#4ea8a0",
-    desc: "All 27 security checks the platform monitors — with remediation guidance, CISA/NIST references, and your flagged findings highlighted.",
-    detail: "Filter by severity, search by keyword, or view flagged-first. Generates a downloadable PDF-ready report.",
+    desc: "All 27 security checks that the platform monitors with remediation guidance, CISA/NIST references, and your flagged findings highlighted.",
+    detail: "Filter by severity, search by keyword, or view flagged findings. Generates a downloadable PDF.",
     icon: "⬡",
     color: "#4ea8a0",
     action: "always",
@@ -61,11 +61,11 @@ const MODULES = [
     label: "Economic Analysis",
     tag: "GORDON–LOEB 2002",
     tagColor: MED_C,
-    desc: "Translates your confirmed findings into a principled cybersecurity budget using the Gordon-Loeb model — the academic gold standard.",
-    detail: "Derives vulnerability (v) directly from your threat findings. Calculates your optimal investment ceiling (z* ≤ 1/e × v × L).",
+    desc: "Translates your confirmed findings into a principled cybersecurity budget using the Gordon-Loeb model ",
+    detail: "The optimal cybersecurity investment should not exceed 37% of the expected loss from a potential security breach.",
     icon: "⬡",
     color: MED_C,
-    action: "results-only",
+    action: "always",
   },
 ];
 
@@ -97,7 +97,7 @@ function ModuleCard({ mod, hasResults, onStartSurvey, onOpenMisconfig, onOpenEco
     if (isLocked) return;
     if (mod.id === "survey")    onStartSurvey();
     if (mod.id === "misconfig") onOpenMisconfig();
-    if (mod.id === "economic" && hasResults) onOpenEconomic();
+    if (mod.id === "economic") onOpenEconomic();
   };
 
   const borderColor = isLocked
@@ -179,7 +179,7 @@ function ModuleCard({ mod, hasResults, onStartSurvey, onOpenMisconfig, onOpenEco
       {/* CTA row */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {isResultsOnly ? (
-          <span style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace" }}>
+          <span style={{ color: CRIT, fontSize: 11, fontFamily: "monospace" }}>
             Complete an assessment to unlock
           </span>
         ) : (
@@ -329,15 +329,14 @@ export default function Home({ onStartSurvey, onOpenMisconfig, onOpenEconomic, l
                 fontSize: 44, color: TEXT_PRI, margin: "0 0 16px",
                 lineHeight: 1.08, fontWeight: 700, letterSpacing: "-0.8px",
               }}>
-                Understand your<br />
-                <span style={{ color: GOLD }}>cyber risk</span> — clearly.
+                MicroSOC - Understand your                <span style={{ color: GOLD }}>cyber risk</span>, clearly.
               </h1>
               <p style={{
                 color: TEXT_DIM, fontSize: 16, lineHeight: 1.75,
                 margin: "0 0 28px", maxWidth: 520,
               }}>
-                A free, local-first security analysis platform for small and medium businesses.
-                No agents. No cloud upload. No technical expertise required.
+                <p>A free analysis platform for small to medium-sized enterprises (SME).<br/>
+                All processing is done locally, your data never leaves your computer. <br/>No sign ups. No technical expertise required. <br/>Take 15 minutes to fill out the survey and receive a customized threat report to better understand and reduce your cyber risk. </p>
               </p>
               <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                 <button
@@ -352,7 +351,7 @@ export default function Home({ onStartSurvey, onOpenMisconfig, onOpenEconomic, l
                   onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-1px)"; e.currentTarget.style.boxShadow = `0 6px 28px ${GOLD}66`; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `0 4px 24px ${GOLD}55`; }}
                 >
-                  {hasResults ? "Start New Assessment →" : "Start Risk Assessment →"}
+                  {hasResults ? "Start New Assessment →" : "Start Cyber Risk Assessment →"}
                 </button>
                 <button
                   onClick={onOpenMisconfig}
@@ -366,17 +365,18 @@ export default function Home({ onStartSurvey, onOpenMisconfig, onOpenEconomic, l
                   onMouseEnter={e => { e.currentTarget.style.borderColor = "#4ea8a050"; e.currentTarget.style.color = "#4ea8a0"; }}
                   onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER2; e.currentTarget.style.color = TEXT_DIM; }}
                 >
-                  Browse Misconfig Guide
+                  Browse Threat Reference Guide
                 </button>
               </div>
             </div>
 
             {/* ── Quick stats ── */}
             <div style={{
-              display: "flex", flexDirection: "column", gap: 8, minWidth: 200,
+              display: "flex", flexDirection: "column", gap: 8, minWidth: 200, color: TEXT_SEC
             }}>
+              Methodology
               {[
-                { n: "27",  label: "Security checks",      color: CRIT },
+                { n: "27",  label: "Security checks",      color: "#1fda47"},
                 { n: "7",   label: "Step PASTA Model",  color: MED_C  },
                 { n: "100%", label: "All data stays local", color: GOLD  },
                 { n: "Free", label: "No account required",  color: LOW_C },
@@ -404,12 +404,41 @@ export default function Home({ onStartSurvey, onOpenMisconfig, onOpenEconomic, l
           />
         )}
 
-        {/* ── Module grid ── */}
-        <div style={{ marginBottom: 16 }}>
+  
+        {/* ── Methodology strip ── */}
+        <div style={{ color: TEXT_SEC, fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10
+         }}>
+            Sources and Definitions
+          </div>
+        <div style={{
+          marginTop: 10, padding: "22px 28px",
+          background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12,
+        }}>
+          
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+            {[
+              { framework: "PASTA",         desc: "Process for Attack Simulation and Threat Analysis — 7-stage threat modeling" },
+              { framework: "MITRE ATT&CK",  desc: "Adversarial tactics and techniques linked to every finding" },
+              { framework: "NIST CSF",      desc: "National Institute of Standards and Technology Cybersecurity Framework - Control mappings and remediation guidance" },
+              { framework: "Gordon–Loeb",   desc: "Research-backed economic model used to determine optimal cyber security investment" },
+              { framework: "CISA / FBI IC3", desc: "Cybersecurity and Infrastructure Agency / FBI Internet Crime Complaint Center - Real-world SME threat intelligence and advisory data" },
+            ].map(({ framework, desc }) => (
+              <div key={framework} style={{ minWidth: 150, flex: 1 }}>
+                <div style={{ color: TEXT_SEC, fontSize: 12, fontWeight: 700, fontFamily: "monospace", marginBottom: 3 }}>{framework}</div>
+                <div style={{ color: TEXT_MUT, fontSize: 12, fontFamily: "Georgia, serif", lineHeight: 1.5 }}>{desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+
+{/* ── Module grid ── */}
+        <div style={{ marginBottom: 32 }}>
           <div style={{
-            display: "flex", alignItems: "center", gap: 12, marginBottom: 20,
-          }}>
-            <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+            display: "flex", alignItems: "center", gap: 12, marginBottom: 10, marginTop: 20
+                      }}>
+            <div style={{ color: TEXT_SEC, fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.12em" }}>
+
               Platform Modules
             </div>
             <div style={{ flex: 1, height: 1, background: BORDER }} />
@@ -432,31 +461,6 @@ export default function Home({ onStartSurvey, onOpenMisconfig, onOpenEconomic, l
             ))}
           </div>
         </div>
-
-        {/* ── Methodology strip ── */}
-        <div style={{
-          marginTop: 40, padding: "22px 28px",
-          background: CARD, border: `1px solid ${BORDER}`, borderRadius: 12,
-        }}>
-          <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14 }}>
-            Methodology & Sources
-          </div>
-          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-            {[
-              { framework: "PASTA",         desc: "Process for Attack Simulation and Threat Analysis — 7-stage threat modeling" },
-              { framework: "MITRE ATT&CK",  desc: "Adversarial tactics and techniques linked to every finding" },
-              { framework: "NIST CSF",      desc: "Control mappings and remediation guidance" },
-              { framework: "Gordon–Loeb",   desc: "ACM TISSEC 2002 — economic model for optimal security investment" },
-              { framework: "CISA / FBI IC3", desc: "Real-world SME threat intelligence and advisory data" },
-            ].map(({ framework, desc }) => (
-              <div key={framework} style={{ minWidth: 150, flex: 1 }}>
-                <div style={{ color: TEXT_SEC, fontSize: 12, fontWeight: 700, fontFamily: "monospace", marginBottom: 3 }}>{framework}</div>
-                <div style={{ color: TEXT_MUT, fontSize: 12, fontFamily: "Georgia, serif", lineHeight: 1.5 }}>{desc}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* ── Footer ── */}
         <p style={{
           textAlign: "center", color: "#1a2a38", fontSize: 11,
