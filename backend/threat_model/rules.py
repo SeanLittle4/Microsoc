@@ -7,6 +7,13 @@ RISK_RULES = [
         "attack_technique": "T1566 Phishing / T1534 Internal Spearphishing",
         "severity": "critical",
         "likelihood": "high",
+        # CVSS v3.1 exploitability attributes
+        # Email-based social engineering: reaches victim over network, no
+        # privileges required, but victim must be deceived into acting.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "required",
         "business_impact": (
             "Attacker impersonates an executive or vendor over email and tricks "
             "an employee into wiring funds to a fraudulent account. Average SME "
@@ -37,6 +44,12 @@ RISK_RULES = [
         "attack_technique": "T1486 Data Encrypted for Impact",
         "severity": "critical",
         "likelihood": "medium",
+        # Commodity ransomware delivered over network (email/RDP/exploit).
+        # No privileges needed initially; victim must interact to trigger.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "required",
         "business_impact": (
             "Ransomware encrypts all business files and systems. Without tested "
             "offline backups, the only options are paying the ransom or permanent "
@@ -69,6 +82,12 @@ RISK_RULES = [
         "attack_technique": "T1110.004 Credential Stuffing",
         "severity": "high",
         "likelihood": "high",
+        # Fully automated internet attack. No privileges or user interaction
+        # required — bots test leaked credentials continuously.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "Attackers use leaked password databases to automatically try credentials "
             "against your email and cloud accounts. Without MFA, a single reused password "
@@ -100,6 +119,12 @@ RISK_RULES = [
         "attack_technique": "T1078 Valid Accounts",
         "severity": "high",
         "likelihood": "medium",
+        # Attacker uses purchased/stolen valid credentials over the network.
+        # Requires low-level credentials (not admin), no UI interaction.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "low",
+        "cvss_ui": "none",
         "business_impact": (
             "Former employees or contractors retain active credentials after leaving. "
             "A disgruntled ex-employee or an attacker who purchases stolen credentials "
@@ -125,6 +150,12 @@ RISK_RULES = [
         "attack_technique": "T1114.003 Email Forwarding Rule",
         "severity": "high",
         "likelihood": "medium",
+        # Post-compromise technique: attacker already has account access (low PR),
+        # sets rule over network automatically with no further UI interaction.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "low",
+        "cvss_ui": "none",
         "business_impact": (
             "After compromising an email account, attackers plant hidden forwarding rules "
             "that silently copy every inbound and outbound email to an external address. "
@@ -150,6 +181,12 @@ RISK_RULES = [
         "attack_technique": "T1199 Trusted Relationship",
         "severity": "high",
         "likelihood": "medium",
+        # Attacker compromises a vendor and pivots using their trusted credentials
+        # (low PR). Network-delivered, no user interaction required.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "low",
+        "cvss_ui": "none",
         "business_impact": (
             "Vendors with shared or uncontrolled access become a secondary attack surface. "
             "An attacker who compromises your IT provider or accountant gains direct access "
@@ -175,6 +212,12 @@ RISK_RULES = [
         "attack_technique": "T1562 Impair Defenses",
         "severity": "medium",
         "likelihood": "high",
+        # Absence of controls means any network-based attacker operates freely.
+        # No privileges or interaction needed to exploit a logging gap.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "Without login logging or anomaly alerts, attackers operate undetected for "
             "an average of 197 days. The longer they're in, the more data they steal and "
@@ -204,6 +247,12 @@ RISK_RULES = [
         "attack_technique": "T1078.001 Valid Accounts: Default Accounts",
         "severity": "high",
         "likelihood": "high",
+        # IoT devices often adjacent-network or internet-exposed. Default creds
+        # are public knowledge (AC: low). No privileges or user interaction needed.
+        "cvss_av": "adjacent",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "Printers, cameras, smart TVs, and other internet-connected devices "
             "shipped with default passwords are trivially compromised. Once inside, "
@@ -235,6 +284,12 @@ RISK_RULES = [
         "attack_technique": "T1052 Exfiltration Over Physical Medium / T1091 Replication Through Removable Media",
         "severity": "medium",
         "likelihood": "medium",
+        # Requires physical presence. No privileges needed once on-site.
+        # No user interaction required — attacker acts directly on hardware.
+        "cvss_av": "physical",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "An open office environment allows any visitor — delivery drivers, contractors, "
             "former employees — to physically access computers, plug in a USB device, "
@@ -252,8 +307,7 @@ RISK_RULES = [
         ],
         "condition": lambda r: r.get("physical_security") in [
             "Open environment — physical access to computers is not restricted",
-        ], 
-        
+        ],
     },
     {
         "id": "admin_daily_use_risk",
@@ -263,6 +317,12 @@ RISK_RULES = [
         "attack_technique": "T1078.003 Valid Accounts: Local Accounts",
         "severity": "high",
         "likelihood": "medium",
+        # Phishing email reaches admin over network. Low PR because attacker
+        # first needs to get the admin to click (UI: required).
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "required",
         "business_impact": (
             "When administrators use their privileged account for everyday tasks like "
             "browsing and email, a single phishing click can give attackers immediate "
@@ -292,6 +352,12 @@ RISK_RULES = [
         "attack_technique": "T1016 System Network Configuration Discovery / T1049 System Network Connections Discovery",
         "severity": "medium",
         "likelihood": "medium",
+        # Attacker must be on the adjacent network (guest Wi-Fi). Once there,
+        # no further privileges or user interaction needed to scan/attack.
+        "cvss_av": "adjacent",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "When customers or visitors share the same Wi-Fi network as business devices, "
             "a compromised or malicious visitor device can scan and attack internal systems "
@@ -324,6 +390,13 @@ RISK_RULES = [
         "attack_technique": "T1486 Data Encrypted for Impact",
         "severity": "medium",
         "likelihood": "high",
+        # Financial exposure amplifier: any network-delivered attack that
+        # succeeds creates uninsured losses. No privileges or UI required
+        # to exploit the absence of insurance coverage.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "Without cyber insurance, the full cost of a breach — legal fees, customer "
             "notification, regulatory fines, system restoration, and lost revenue — falls "
@@ -359,6 +432,12 @@ RISK_RULES = [
         "attack_technique": "T1530 Data from Cloud Storage",
         "severity": "high",
         "likelihood": "medium",
+        # Data exfiltration happens over network. No privileges needed beyond
+        # initial access; no user interaction required to exfiltrate.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "Businesses that collect customer PII are legally required to notify affected "
             "individuals and regulators within strict timeframes after a breach — as short "
@@ -394,6 +473,12 @@ RISK_RULES = [
         "attack_technique": "T1552.001 Credentials In Files",
         "severity": "high",
         "likelihood": "medium",
+        # Requires physical access to the device. Once obtained, no privileges
+        # or user interaction needed — attacker boots from USB or removes disk.
+        "cvss_av": "physical",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "A stolen or lost laptop without full disk encryption gives an attacker "
             "complete access to every file, email, saved password, and credential on "
@@ -425,6 +510,12 @@ RISK_RULES = [
         "attack_technique": "T1486 Data Encrypted for Impact / T1537 Transfer Data to Cloud Account",
         "severity": "critical",
         "likelihood": "medium",
+        # Same delivery vector as ransomware_no_backup. User interaction
+        # required for initial access; data theft/exfil then automated.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "required",
         "business_impact": (
             "Modern ransomware groups no longer just encrypt files — they first steal "
             "copies of sensitive data, then threaten to publish it publicly if the ransom "
@@ -466,6 +557,12 @@ RISK_RULES = [
         "attack_technique": "T1566.004 Phishing: Spearphishing Voice",
         "severity": "high",
         "likelihood": "medium",
+        # Phone/remote social engineering: network-delivered (VOIP/internet),
+        # no privileges needed, but victim must cooperate (UI: required).
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "required",
         "business_impact": (
             "Attackers call employees posing as Microsoft support, IT vendors, or the "
             "business owner's IT provider and convince them to install remote access tools "
@@ -481,7 +578,7 @@ RISK_RULES = [
             "to install software. Run a tabletop exercise simulating a tech support call."
         ),
         "references": [
-            "https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf"    
+            "https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf"
         ],
         "condition": lambda r: (
             r.get("social_engineering") in [
@@ -501,6 +598,12 @@ RISK_RULES = [
         "attack_technique": "T1190 Exploit Public-Facing Application / T1203 Exploitation for Client Execution",
         "severity": "high",
         "likelihood": "high",
+        # Known CVEs with public exploit kits. Network-reachable, no privileges
+        # needed, no user interaction (remote code execution on unpatched systems).
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "End-of-life software no longer receives security patches, meaning every "
             "newly discovered vulnerability is permanently exploitable. NIST recommends "
@@ -531,6 +634,12 @@ RISK_RULES = [
         "attack_technique": "T1133 External Remote Services",
         "severity": "high",
         "likelihood": "medium",
+        # Default firewall exposes services directly to internet. Automated
+        # scanners find them with no privileges or interaction needed.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "A firewall running on factory default settings — or no firewall at all — "
             "exposes all internal services directly to the internet. CISA and NSA "
@@ -562,6 +671,12 @@ RISK_RULES = [
         "attack_technique": "T1592 Gather Victim Host Information",
         "severity": "medium",
         "likelihood": "high",
+        # Untracked internet-connected devices are network-reachable by default.
+        # No privileges or interaction needed to exploit forgotten assets.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "You cannot protect what you do not know exists. Without an asset inventory, "
             "forgotten devices — old laptops, decommissioned servers, personal phones "
@@ -592,6 +707,12 @@ RISK_RULES = [
         "attack_technique": "T1485 Data Destruction / T1486 Data Encrypted for Impact",
         "severity": "high",
         "likelihood": "medium",
+        # Impact amplifier: the triggering attack is network-delivered.
+        # Absence of BCP requires no privileges or interaction to exploit.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "Without a business continuity plan, a ransomware attack or major outage "
             "leaves employees with no guidance on how to operate, who to contact, or "
@@ -628,6 +749,12 @@ RISK_RULES = [
         "attack_technique": "T1110.004 Credential Stuffing",
         "severity": "critical",
         "likelihood": "high",
+        # Fully automated internet attack against cloud login portals.
+        # Bots run 24/7 with no privileges or user interaction required.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "Attackers purchase leaked credential databases from past breaches and "
             "automatically test them against Microsoft 365, Google Workspace, and "
@@ -646,7 +773,6 @@ RISK_RULES = [
         ),
         "references": [
             "https://www.cisa.gov/MFA",
-            
         ],
         "condition": lambda r: (
             r.get("mfa") in [
@@ -669,6 +795,12 @@ RISK_RULES = [
         "attack_technique": "T1078 Valid Accounts / T1213 Data from Information Repositories",
         "severity": "high",
         "likelihood": "medium",
+        # Insider has local access and legitimate credentials (low PR).
+        # Acts directly on systems with no network barrier or UI dependency.
+        "cvss_av": "local",
+        "cvss_ac": "low",
+        "cvss_pr": "low",
+        "cvss_ui": "none",
         "business_impact": (
             "CISA defines insider threat as any person with authorized access who "
             "intentionally or unintentionally causes harm. For SMEs with no formal "
@@ -707,6 +839,12 @@ RISK_RULES = [
         "attack_technique": "T1566.002 Phishing: Spearphishing Link / T1598 Phishing for Information",
         "severity": "high",
         "likelihood": "high",
+        # Attacker sends spoofed email over network with no privileges.
+        # Recipient (UI: required) must be deceived to make the attack succeed.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "required",
         "business_impact": (
             "Without DMARC, attackers can send emails that appear to come from your "
             "exact domain — your customers, partners, and employees will see your "
@@ -741,6 +879,12 @@ RISK_RULES = [
         "attack_technique": "T1530 Data from Cloud Storage / T1005 Data from Local System",
         "severity": "medium",
         "likelihood": "medium",
+        # Requires physical access to disposed device. Commercial recovery tools
+        # need no privileges and work without user interaction.
+        "cvss_av": "physical",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "Standard factory resets and quick formats do not securely erase data — "
             "commercial recovery tools can reconstruct files, emails, and credentials "
@@ -780,6 +924,13 @@ RISK_RULES = [
         "attack_technique": "T1566.001 Spearphishing Attachment / T1566.002 Spearphishing Link",
         "severity": "critical",
         "likelihood": "high",
+        # Email-delivered over network, no privileges needed.
+        # User must click/open (UI: required) — the defining characteristic
+        # of phishing as an attack class.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "required",
         "business_impact": (
             "Phishing is the most frequently reported cybercrime in the FBI IC3 2023 "
             "report with over 298,000 complaints — accounting for approximately 34% of "
@@ -826,6 +977,12 @@ RISK_RULES = [
         "attack_technique": "T1133 External Remote Services / T1110 Brute Force",
         "severity": "critical",
         "likelihood": "high",
+        # Directly internet-facing RDP. Automated brute-force bots need no
+        # privileges and no user interaction — highest-risk CVSS profile.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "Remote Desktop Protocol (RDP) exposed directly to the internet is one of "
             "the most commonly exploited entry points for ransomware. Attackers "
@@ -864,6 +1021,12 @@ RISK_RULES = [
         "attack_technique": "T1190 Exploit Public-Facing Application",
         "severity": "high",
         "likelihood": "high",
+        # Multiple public-facing services, misconfigured firewall. Automated
+        # scanners probe continuously with no privileges or interaction.
+        "cvss_av": "network",
+        "cvss_ac": "low",
+        "cvss_pr": "none",
+        "cvss_ui": "none",
         "business_impact": (
             "Every service exposed to the internet is a potential entry point. "
             "Businesses exposing three or more services — website, email, file sharing, "

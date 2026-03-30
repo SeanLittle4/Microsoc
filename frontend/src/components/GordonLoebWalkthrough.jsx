@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 
-// ─── Design tokens — exact match with Survey.jsx ──────────────────────────────
+// ─── Design tokens ────────────────────────────────────────────────────────────
 const BG       = "#0b1117";
 const CARD     = "#0e1822";
 const BORDER   = "#141e28";
@@ -16,11 +16,30 @@ const MED_C    = "#5b8dd4";
 const LOW_C    = "#60b06e";
 const SEV_COLORS = { critical: CRIT, high: HIGH_C, medium: MED_C, low: LOW_C };
 
-// ─── Gordon-Loeb constants ────────────────────────────────────────────────────
-const GL_CAP = 1 / Math.E; // ≈ 0.3679 — the 37% upper bound
+// ─── Gordon-Loeb constant ─────────────────────────────────────────────────────
+const GL_CAP = 1 / Math.E; // ≈ 0.3679
 
-const SEV_W  = { critical: 0.18, high: 0.10, medium: 0.05, low: 0.02 };
-const LIKE_M = { high: 1.0,      medium: 0.75,             low: 0.5  };
+// ─── CVSS v3.1 exploitability weights ────────────────────────────────────────
+// Source: NIST NVD CVSS v3.1 specification
+// https://www.first.org/cvss/specification-document
+const AV_W = { network: 0.85, adjacent: 0.62, local: 0.55, physical: 0.2 };
+const AC_W = { low: 0.77, high: 0.44 };
+const PR_W = { none: 0.85, low: 0.62, high: 0.27 };
+const UI_W = { none: 0.85, required: 0.62 };
+
+// Maximum possible product of AV × AC × PR × UI (network/low/none/none)
+const MAX_EXPLOIT = 0.85 * 0.77 * 0.85 * 0.85; // ≈ 0.4729
+
+// ─── Severity impact weights (calibrated to Gordon-Loeb scale) ────────────────
+// These represent the impact component of each finding's v contribution.
+// Exploitability (CVSS) and impact (severity) are multiplied together.
+const SEV_W = { critical: 0.18, high: 0.10, medium: 0.05, low: 0.02 };
+
+// Fallback likelihood multiplier for manually-added findings (no CVSS data)
+const LIKE_M = { high: 1.0, medium: 0.75, low: 0.5 };
+
+// Severity ordering used for confidence interval bounds (±1 grade)
+const SEV_ORDER = ["low", "medium", "high", "critical"];
 
 // ─── Empty model fallback ─────────────────────────────────────────────────────
 const EMPTY_MODEL = {
@@ -36,16 +55,53 @@ const fmt = (n) =>
 
 const pct = (n) => (Number.isFinite(n) ? `${(n * 100).toFixed(1)}%` : "—");
 
-function computeV(findings) {
-  const raw = (findings || []).reduce(
-    (sum, f) => sum + (SEV_W[f.severity] || 0) * (LIKE_M[f.likelihood] || 0.5),
-    0
-  );
+// Returns the normalised CVSS exploitability score [0, 1] for a finding.
+// Findings from the survey carry cvss_av/ac/pr/ui; manual findings do not.
+function cvssExploitability(f) {
+  const av = AV_W[f.cvss_av];
+  const ac = AC_W[f.cvss_ac];
+  const pr = PR_W[f.cvss_pr];
+  const ui = UI_W[f.cvss_ui];
+  if (av == null || ac == null || pr == null || ui == null) return null;
+  return (av * ac * pr * ui) / MAX_EXPLOIT;
+}
+
+// Per-finding v contribution.
+// Survey findings: SEV_W[severity] × normalised_cvss_exploitability
+// Manual findings: SEV_W[severity] × LIKE_M[likelihood]  (legacy behaviour)
+function findingContribution(f, overrideSev) {
+  const sev = overrideSev ?? f.severity;
+  const impact = SEV_W[sev] ?? 0;
+  const exploit = cvssExploitability(f);
+  if (exploit !== null) return impact * exploit;
+  return impact * (LIKE_M[f.likelihood] ?? 0.5);
+}
+
+// Sum contributions across all findings, capped at 0.95
+function computeV(findings, overrideSev) {
+  const raw = (findings ?? []).reduce((sum, f) => sum + findingContribution(f, overrideSev), 0);
   return Math.min(raw, 0.95);
 }
 
+// Confidence interval: shift every finding's severity ±1 grade.
+// v_low  = all findings assumed one severity grade lower (conservative)
+// v_high = all findings assumed one severity grade higher (worst-case)
+// This reflects the inherent uncertainty in qualitative severity classification.
+function computeVBounds(findings) {
+  const shifted = (dir) =>
+    (findings ?? []).reduce((sum, f) => {
+      const idx = SEV_ORDER.indexOf(f.severity);
+      const newSev = SEV_ORDER[Math.max(0, Math.min(SEV_ORDER.length - 1, idx + dir))];
+      return sum + findingContribution(f, newSev);
+    }, 0);
+  return {
+    low:  Math.min(shifted(-1), 0.95),
+    high: Math.min(shifted(+1), 0.95),
+  };
+}
+
 function findingWeight(f) {
-  return (SEV_W[f.severity] || 0) * (LIKE_M[f.likelihood] || 0.5);
+  return findingContribution(f);
 }
 
 // ─── Survey context maps ──────────────────────────────────────────────────────
@@ -110,7 +166,7 @@ const InfoBox = ({ color = GOLD, children }) => (
   </div>
 );
 
-const StatBox = ({ label, value, color, sub }) => (
+const StatBox = ({ label, value, sub, color }) => (
   <div style={{
     background: BG, border: `1px solid ${color ? color + "30" : BORDER}`,
     borderRadius: 8, padding: "14px 18px", flex: 1, minWidth: 130,
@@ -138,6 +194,96 @@ const SevBadge = ({ sev }) => (
   </span>
 );
 
+// ─── Confidence Interval Bar ──────────────────────────────────────────────────
+function CIBar({ vLow, vCentral, vHigh, vColor }) {
+  const margin = ((vHigh - vLow) / 2 * 100).toFixed(1);
+  const hasCvss = vLow !== vCentral || vHigh !== vCentral;
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      {/* Range bar */}
+      <div style={{ position: "relative", height: 10, background: BORDER, borderRadius: 5, overflow: "visible", marginBottom: 8 }}>
+        {/* Filled range: low → high */}
+        <div style={{
+          position: "absolute",
+          left: `${vLow * 100}%`,
+          width: `${(vHigh - vLow) * 100}%`,
+          height: "100%",
+          background: vColor + "40",
+          borderRadius: 5,
+        }} />
+        {/* Central estimate marker */}
+        <div style={{
+          position: "absolute",
+          left: `${vCentral * 100}%`,
+          transform: "translateX(-50%)",
+          width: 3, height: "100%",
+          background: vColor,
+          borderRadius: 2,
+        }} />
+        {/* Low bound marker */}
+        <div style={{
+          position: "absolute",
+          left: `${vLow * 100}%`,
+          transform: "translateX(-50%)",
+          width: 2, height: 10,
+          background: vColor + "80",
+          borderRadius: 1,
+        }} />
+        {/* High bound marker */}
+        <div style={{
+          position: "absolute",
+          left: `${vHigh * 100}%`,
+          transform: "translateX(-50%)",
+          width: 2, height: 10,
+          background: vColor + "80",
+          borderRadius: 1,
+        }} />
+      </div>
+
+      {/* Labels under bar */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div style={{ textAlign: "center", transform: `translateX(${vLow * 100 * 0.8}%)` }}>
+          <div style={{ color: TEXT_MUT, fontSize: 9, fontFamily: "monospace" }}>{pct(vLow)}</div>
+          <div style={{ color: TEXT_MUT, fontSize: 8, fontFamily: "monospace" }}>low</div>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ color: vColor, fontSize: 11, fontFamily: "monospace", fontWeight: 700 }}>
+            {pct(vCentral)} {hasCvss && <span style={{ color: TEXT_MUT, fontWeight: 400 }}>± {margin}%</span>}
+          </div>
+          <div style={{ color: TEXT_MUT, fontSize: 8, fontFamily: "monospace" }}>central estimate</div>
+        </div>
+        <div style={{ textAlign: "center", transform: `translateX(-${(1 - vHigh) * 100 * 0.8}%)` }}>
+          <div style={{ color: TEXT_MUT, fontSize: 9, fontFamily: "monospace" }}>{pct(vHigh)}</div>
+          <div style={{ color: TEXT_MUT, fontSize: 8, fontFamily: "monospace" }}>high</div>
+        </div>
+      </div>
+
+      {hasCvss && (
+        <div style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "Georgia, serif", lineHeight: 1.5, marginTop: 10 }}>
+          The ±{margin}% interval reflects uncertainty in severity classification — each finding's grade could reasonably be one step higher or lower. The Gordon-Loeb investment ceiling (z*) is computed on the central estimate; you can see how it shifts across the range in the results section.
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── CVSS attribute display badge ─────────────────────────────────────────────
+function CVSSBadge({ label, value }) {
+  if (!value) return null;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      padding: "2px 7px", borderRadius: 4, marginRight: 5, marginBottom: 4,
+      background: BORDER2, border: `1px solid ${BORDER}`,
+      fontSize: 9, fontFamily: "monospace", color: TEXT_SEC,
+    }}>
+      <span style={{ color: TEXT_MUT }}>{label}:</span>
+      <span style={{ color: TEXT_SEC, fontWeight: 700, textTransform: "uppercase" }}>{value}</span>
+    </span>
+  );
+}
+
 // ─── Section 1: GL Introduction ───────────────────────────────────────────────
 function GLIntro({ model }) {
   const [open, setOpen] = useState(false);
@@ -147,8 +293,8 @@ function GLIntro({ model }) {
     : summary.overall_risk_score >= 40 ? HIGH_C : LOW_C;
 
   return (
-    <div>
-      {/* Context banner */}
+    <div style ={{color: TEXT_SEC}}>
+      Each threat is scored based on how easy it is for an attacker to exploit, whether they need to be physically present, already have access, or can attack from anywhere on the internet. The scores are then added up to estimate the overall chance of a breach.
       {hasSurveyResults ? (
         <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", marginBottom: 20 }}>
           <div style={{ textAlign: "center" }}>
@@ -180,17 +326,18 @@ function GLIntro({ model }) {
           <div style={{ flex: 1, minWidth: 180 }}>
             <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.65, margin: 0 }}>
               Your {summary.total_findings} confirmed findings have been automatically fed into the{" "}
-              <strong style={{ color: GOLD }}>Gordon–Loeb Model</strong>. Enter your asset value below to see your complete investment picture.
+              <strong style={{ color: GOLD }}>Gordon–Loeb Model</strong>. Breach probability (v) is now computed
+              using <strong style={{ color: TEXT_SEC }}>CVSS v3.1 exploitability attributes</strong> for each
+              finding, with a confidence interval derived from severity classification uncertainty.
             </p>
           </div>
         </div>
       ) : (
         <InfoBox color={MED_C}>
-          <strong style={{ color: TEXT_SEC }}>No survey results loaded.</strong> You can still use this model by adding your own vulnerabilities and risk factors in the section below, or by setting the breach probability (v) manually using the override slider. Enter your asset value to compute your investment ceiling.
+          <strong style={{ color: TEXT_SEC }}>No survey results loaded.</strong> Add your own vulnerabilities below using severity and likelihood, or set the breach probability (v) manually with the override slider. Enter your asset value to compute your investment ceiling.
         </InfoBox>
       )}
 
-      {/* Collapsible model explanation */}
       <button
         onMouseDown={e => e.preventDefault()}
         onClick={() => setOpen(o => !o)}
@@ -202,7 +349,7 @@ function GLIntro({ model }) {
         }}
       >
         <span style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.08em", flex: 1 }}>
-          About the Gordon–Loeb Model (2002)
+          About the Gordon–Loeb Model &amp; CVSS v3.1 Scoring
         </span>
         <span style={{ color: TEXT_MUT, fontSize: 12 }}>{open ? "▲" : "▼"}</span>
       </button>
@@ -210,32 +357,44 @@ function GLIntro({ model }) {
       {open && (
         <div style={{ background: BG, border: `1px solid ${BORDER}`, borderTop: "none", borderRadius: "0 0 8px 8px", padding: "18px" }}>
           <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.7, margin: "0 0 12px" }}>
-            Published in <em>ACM Transactions on Information and System Security</em> (2002) by Lawrence A. Gordon and Martin P. Loeb of the University of Maryland, this model is widely regarded as the "gold standard" for determining how much an organization should invest in cybersecurity. It has been cited in the NIST Cybersecurity Framework, the U.S. Council of Better Business Bureaus SMB cybersecurity guide, and covered by the <em>Wall Street Journal</em> and <em>Financial Times</em>.
-          </p>
-          <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.7, margin: "0 0 12px" }}>
-            The core theorem proves that for all realistic security breach probability functions, the economically rational investment ceiling is <strong style={{ color: GOLD }}>1/e ≈ 36.8%</strong> of your expected loss. Beyond this threshold, each additional dollar spent on security returns less risk reduction than its cost — producing negative net value.
+            Published in <em>ACM Transactions on Information and System Security</em> (2002), the Gordon-Loeb model
+            proves that the rational investment ceiling is <strong style={{ color: GOLD }}>1/e ≈ 36.8%</strong> of
+            expected loss. Every dollar below this threshold has positive expected return; beyond it, diminishing
+            returns apply.
           </p>
           <FormulaBox>z* ≤ (1/e) × v × L &nbsp;&nbsp;≈&nbsp;&nbsp; 0.3679 × v × L</FormulaBox>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginTop: 14 }}>
+
+          <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.7, margin: "12px 0" }}>
+            <strong style={{ color: TEXT_SEC }}>How v is computed.</strong> Each survey finding carries four
+            CVSS v3.1 exploitability attributes: Attack Vector (AV), Attack Complexity (AC), Privileges Required
+            (PR), and User Interaction (UI). These are multiplied together and normalised to [0, 1], then scaled
+            by the finding's severity impact weight. All findings' contributions are summed and capped at 0.95.
+          </p>
+          <FormulaBox>
+            v_contribution = SEV_impact × (AV × AC × PR × UI) / max_exploit{"\n"}
+            v = min(Σ contributions, 0.95)
+          </FormulaBox>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 10, marginTop: 14 }}>
             {[
-              { sym: "v", name: "Vulnerability", desc: "Probability of a breach given your current controls. Add your findings below to compute it automatically, or set it manually using the override slider." },
-              { sym: "L", name: "Potential Loss",   desc: "Total monetary loss if a breach occurs — IT recovery, legal fees, downtime, notification, regulatory fines, and reputational damage combined." },
-              { sym: "z*", name: "Optimal Investment", desc: "The maximum you should invest annually. Spending more than this ceiling yields diminishing returns. Spending less leaves exploitable risk on the table." },
-            ].map(({ sym, name, desc }) => (
-              <div key={sym} style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <div style={{
-                  flexShrink: 0, width: 30, height: 30, borderRadius: 6,
-                  background: CARD, border: `1px solid ${GOLD}40`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: "monospace", color: GOLD, fontWeight: 700, fontSize: 12,
-                }}>{sym}</div>
-                <div>
-                  <span style={{ color: TEXT_SEC, fontWeight: 700, fontSize: 13 }}>{name}</span>
-                  <span style={{ color: TEXT_DIM, fontSize: 13 }}> — {desc}</span>
-                </div>
+              { attr: "AV — Attack Vector",       vals: "Network 0.85 · Adjacent 0.62 · Local 0.55 · Physical 0.20" },
+              { attr: "AC — Attack Complexity",   vals: "Low 0.77 · High 0.44" },
+              { attr: "PR — Privileges Required", vals: "None 0.85 · Low 0.62 · High 0.27" },
+              { attr: "UI — User Interaction",    vals: "None 0.85 · Required 0.62" },
+            ].map(({ attr, vals }) => (
+              <div key={attr} style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 6, padding: "10px 12px" }}>
+                <div style={{ color: GOLD, fontSize: 10, fontFamily: "monospace", fontWeight: 700, marginBottom: 4 }}>{attr}</div>
+                <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", lineHeight: 1.6 }}>{vals}</div>
               </div>
             ))}
           </div>
+
+          <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.7, margin: "14px 0 0" }}>
+            <strong style={{ color: TEXT_SEC }}>Confidence interval.</strong> The ± range is computed by
+            shifting every finding's severity one grade up and one grade down, then recalculating v. This
+            captures the inherent uncertainty in qualitative severity classification — a "high" finding
+            could reasonably be critical or medium — without requiring precise probability estimates.
+          </p>
         </div>
       )}
     </div>
@@ -245,25 +404,30 @@ function GLIntro({ model }) {
 // ─── Section 2: Vulnerability (v) ────────────────────────────────────────────
 function VulnerabilitySection({ model, extraFindings, setExtraFindings, manualV, setManualV }) {
   const hasSurveyResults = model.findings.length > 0;
-
-  // Open the extra panel by default if there are no survey results
   const [showExtra, setShowExtra] = useState(!hasSurveyResults);
 
-  const baseV     = computeV(model.findings);
-  const extraV    = computeV(extraFindings.filter(f => f.name));
-  const combinedV = manualV !== null ? manualV : Math.min(baseV + extraV, 0.95);
-  const vColor    = combinedV > 0.6 ? CRIT : combinedV > 0.3 ? HIGH_C : LOW_C;
+  // Central v from all findings
+  const allSurveyFindings = model.findings;
+  const validExtra = extraFindings.filter(f => f.name);
+  const allFindings = [...allSurveyFindings, ...validExtra];
+
+  const baseV   = computeV(allSurveyFindings);
+  const extraV  = computeV(validExtra);
+  const bounds  = useMemo(() => computeVBounds(allFindings), [allFindings]);
+
+  const combinedV  = manualV !== null ? manualV : Math.min(baseV + extraV, 0.95);
+  const vLow       = manualV !== null ? manualV : bounds.low;
+  const vHigh      = manualV !== null ? manualV : bounds.high;
+  const vColor     = combinedV > 0.6 ? CRIT : combinedV > 0.3 ? HIGH_C : LOW_C;
+
+  const hasExtras = extraFindings.length > 0 || manualV !== null;
 
   const addExtra = () =>
     setExtraFindings(f => [...f, { id: `extra-${Date.now()}`, name: "", severity: "high", likelihood: "medium" }]);
-
   const updateExtra = (id, field, val) =>
     setExtraFindings(f => f.map(x => x.id === id ? { ...x, [field]: val } : x));
-
   const removeExtra = (id) =>
     setExtraFindings(f => f.filter(x => x.id !== id));
-
-  const hasExtras = extraFindings.length > 0 || manualV !== null;
 
   const selectStyle = {
     background: CARD, border: `1px solid ${BORDER}`, borderRadius: 6,
@@ -272,81 +436,98 @@ function VulnerabilitySection({ model, extraFindings, setExtraFindings, manualV,
 
   return (
     <div>
-      {/* Header row with live v value */}
+      {/* Header */}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14, flexWrap: "wrap", gap: 10 }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
             <span style={{ color: GOLD, fontFamily: "monospace", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em" }}>v</span>
             <span style={{ color: BORDER2, fontFamily: "monospace", fontSize: 10 }}>·</span>
             <span style={{ color: TEXT_MUT, fontFamily: "monospace", fontSize: 10 }}>
-              Vulnerability — {hasSurveyResults ? "auto-computed from findings" : "add your findings or set manually"}
+              Vulnerability — {hasSurveyResults ? "CVSS-weighted from findings" : "add findings or set manually"}
             </span>
           </div>
           <h3 style={{ color: TEXT_PRI, fontFamily: "Georgia, serif", fontSize: 18, fontWeight: 700, margin: 0, lineHeight: 1.2 }}>
             Breach Probability
           </h3>
         </div>
-        <div style={{ fontSize: 34, fontWeight: 700, color: combinedV > 0 ? vColor : TEXT_MUT, fontFamily: "monospace", lineHeight: 1 }}>
-          {combinedV > 0 ? pct(combinedV) : "—"}
+        <div style={{ textAlign: "right" }}>
+          <div style={{ fontSize: 34, fontWeight: 700, color: combinedV > 0 ? vColor : TEXT_MUT, fontFamily: "monospace", lineHeight: 1 }}>
+            {combinedV > 0 ? pct(combinedV) : "—"}
+          </div>
+          {combinedV > 0 && manualV === null && allFindings.length > 0 && (
+            <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", marginTop: 2 }}>
+              ± {(((vHigh - vLow) / 2) * 100).toFixed(1)}%
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div style={{ height: 7, background: BORDER, borderRadius: 4, overflow: "hidden", marginBottom: 10 }}>
-        <div style={{ width: `${combinedV * 100}%`, height: "100%", background: combinedV > 0 ? vColor : BORDER, borderRadius: 4, transition: "width 0.5s" }} />
-      </div>
+      {/* Confidence interval bar */}
+      {combinedV > 0 && (
+        <CIBar vLow={vLow} vCentral={combinedV} vHigh={vHigh} vColor={vColor} />
+      )}
 
-      <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.65, margin: "0 0 16px" }}>
-        {combinedV === 0
-          ? "Add risk factors below or use the manual override to set your breach probability. Even a rough estimate produces a meaningful investment ceiling."
-          : combinedV > 0.6
-          ? "High breach probability. Multiple confirmed threat vectors create compounding risk across your environment."
-          : combinedV > 0.3
-          ? "Moderate breach probability. Gordon & Loeb (2002) note that moderate-vulnerability organizations often derive the highest return on security investment."
-          : "Lower breach probability. Security investment still creates positive expected value — the recommended ceiling will be proportionally smaller, but targeted controls remain worthwhile."}
-      </p>
+      {combinedV === 0 && (
+        <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.65, margin: "0 0 16px" }}>
+          Add risk factors below or use the manual override to set your breach probability.
+        </p>
+      )}
 
-      {/* Survey findings breakdown — only shown if survey results exist */}
+      {/* Survey findings breakdown */}
       {hasSurveyResults && (
         <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 18px", marginBottom: 14 }}>
           <SectionLabel>
-            {model.findings.length} confirmed finding{model.findings.length !== 1 ? "s" : ""} from your assessment
+            {model.findings.length} confirmed finding{model.findings.length !== 1 ? "s" : ""} — CVSS v3.1 exploitability
           </SectionLabel>
           {model.findings.map((f, i) => {
             const w = findingWeight(f);
+            const exploit = cvssExploitability(f);
             const color = SEV_COLORS[f.severity] || TEXT_MUT;
-            const barW = Math.min((w / 0.18) * 100, 100);
+            const barW = Math.min((w / (SEV_W.critical * 1)) * 100, 100);
             return (
               <div key={f.id} style={{
-                display: "flex", alignItems: "center", gap: 10, padding: "9px 0",
+                padding: "10px 0",
                 borderBottom: i < model.findings.length - 1 ? `1px solid ${BORDER}` : "none",
               }}>
-                <SevBadge sev={f.severity} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ color: TEXT_SEC, fontSize: 12, fontFamily: "Georgia, serif", fontWeight: 700, lineHeight: 1.3 }}>
-                    {f.name}
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <SevBadge sev={f.severity} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ color: TEXT_SEC, fontSize: 12, fontFamily: "Georgia, serif", fontWeight: 700, lineHeight: 1.3 }}>
+                      {f.name}
+                    </div>
                   </div>
-                  <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", marginTop: 2 }}>
-                    likelihood: {f.likelihood}
+                  <div style={{ flexShrink: 0, textAlign: "right", minWidth: 90 }}>
+                    <div style={{ height: 4, width: 80, background: BORDER, borderRadius: 2, overflow: "hidden", marginBottom: 3 }}>
+                      <div style={{ width: `${barW}%`, height: "100%", background: color, borderRadius: 2 }} />
+                    </div>
+                    <div style={{ color: color, fontSize: 10, fontFamily: "monospace", fontWeight: 700 }}>+{pct(w)}</div>
                   </div>
                 </div>
-                <div style={{ flexShrink: 0, textAlign: "right", minWidth: 90 }}>
-                  <div style={{ height: 4, width: 80, background: BORDER, borderRadius: 2, overflow: "hidden", marginBottom: 3 }}>
-                    <div style={{ width: `${barW}%`, height: "100%", background: color, borderRadius: 2 }} />
-                  </div>
-                  <div style={{ color: color, fontSize: 10, fontFamily: "monospace", fontWeight: 700 }}>+{pct(w)}</div>
+                {/* CVSS attribute badges */}
+                <div style={{ paddingLeft: 0, marginTop: 2 }}>
+                  <CVSSBadge label="AV" value={f.cvss_av} />
+                  <CVSSBadge label="AC" value={f.cvss_ac} />
+                  <CVSSBadge label="PR" value={f.cvss_pr} />
+                  <CVSSBadge label="UI" value={f.cvss_ui} />
+                  {exploit !== null && (
+                    <span style={{ fontSize: 9, fontFamily: "monospace", color: TEXT_MUT, marginLeft: 4 }}>
+                      exploit score: {(exploit * 100).toFixed(0)}%
+                    </span>
+                  )}
                 </div>
               </div>
             );
           })}
-          <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10, paddingTop: 8, borderTop: `1px solid ${BORDER}` }}>
-            <span style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace", marginRight: 10 }}>Base v from findings:</span>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 10, paddingTop: 8, borderTop: `1px solid ${BORDER}`, flexWrap: "wrap", gap: 6 }}>
+            <span style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace" }}>
+              Base v (CVSS-weighted):
+            </span>
             <span style={{ color: vColor, fontSize: 13, fontFamily: "monospace", fontWeight: 700 }}>{pct(baseV)}</span>
           </div>
         </div>
       )}
 
-      {/* Toggle: additional risk factors */}
+      {/* Extra findings panel */}
       <button
         onMouseDown={e => e.preventDefault()}
         onClick={() => setShowExtra(o => !o)}
@@ -385,16 +566,13 @@ function VulnerabilitySection({ model, extraFindings, setExtraFindings, manualV,
         }}>
           <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.65, margin: "0 0 16px" }}>
             {hasSurveyResults
-              ? "Add threats or vulnerabilities not captured by the survey — such as risks specific to your industry, gaps your team has already identified, or findings from a prior security audit or penetration test."
-              : "Add the vulnerabilities and risks that apply to your business. Each entry contributes to your computed breach probability (v) using severity × likelihood weighting. You can also set v directly using the manual override below."}
+              ? "Add threats or vulnerabilities not captured by the survey. These use severity × likelihood weighting (without CVSS) and are included in the confidence interval calculation."
+              : "Add your vulnerabilities here. When manually entering vulnerabilities, the breach probability is calculated using a severity × likelihood weighting."}
           </p>
 
-          {/* Extra finding rows */}
           {extraFindings.length > 0 && (
             <div style={{ marginBottom: 12 }}>
-              <SectionLabel>
-                {hasSurveyResults ? "Additional risk factors" : "Your vulnerabilities"}
-              </SectionLabel>
+              <SectionLabel>Your vulnerabilities</SectionLabel>
               {extraFindings.map(f => (
                 <div key={f.id} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
                   <input
@@ -447,21 +625,20 @@ function VulnerabilitySection({ model, extraFindings, setExtraFindings, manualV,
 
           {/* Manual override */}
           <div style={{ paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
-            <SectionLabel>Manual vulnerability override {hasSurveyResults ? "(advanced)" : ""}</SectionLabel>
+            <SectionLabel>Manual vulnerability override</SectionLabel>
             <p style={{ color: TEXT_DIM, fontSize: 12, fontFamily: "Georgia, serif", lineHeight: 1.6, margin: "0 0 12px" }}>
-              {hasSurveyResults
-                ? "If you have a specific breach probability from a prior penetration test, insurance carrier assessment, or formal risk framework, enter it here to override the computed value entirely."
-                : "If you already know your breach probability from a penetration test, insurance assessment, or risk framework, drag the slider to set it directly. Otherwise, use the fields above to compute it from your specific vulnerabilities."}
+              If you have a breach probability from a penetration test, insurance assessment, or formal risk framework,
+              set it here directly. The confidence interval will collapse to a single point when a manual value is active.
             </p>
             <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
               <input
                 type="range" min={0} max={0.95} step={0.01}
-                value={manualV !== null ? manualV : Math.min(baseV + extraV, 0.95)}
+                value={manualV !== null ? manualV : combinedV}
                 onChange={e => setManualV(parseFloat(e.target.value))}
                 style={{ flex: 1, accentColor: GOLD, cursor: "pointer" }}
               />
               <span style={{ color: GOLD, fontFamily: "monospace", fontSize: 14, fontWeight: 700, width: 48, textAlign: "right" }}>
-                {pct(manualV !== null ? manualV : Math.min(baseV + extraV, 0.95))}
+                {pct(manualV !== null ? manualV : combinedV)}
               </span>
               {manualV !== null && (
                 <button
@@ -479,7 +656,7 @@ function VulnerabilitySection({ model, extraFindings, setExtraFindings, manualV,
             {manualV !== null && (
               <div style={{ color: HIGH_C, fontSize: 11, fontFamily: "monospace", marginTop: 6 }}>
                 ↳ Manual override active: {pct(manualV)}
-                {(baseV + extraV) > 0 && ` (computed: ${pct(Math.min(baseV + extraV, 0.95))})`}
+                {combinedV > 0 && ` (CVSS-computed: ${pct(Math.min(baseV + extraV, 0.95))})`}
               </div>
             )}
           </div>
@@ -495,24 +672,17 @@ function AssetValueSection({ assets, setAssets, surveyAnswers }) {
   const hintName = crown && CROWN_JEWEL_HINTS[crown];
   const costCtx  = BREACH_COST_MAP[surveyAnswers?.breach_cost];
 
-  const addRow = () => setAssets(a => [...a, { id: Date.now(), name: "", value: "" }]);
-
+  const addRow  = () => setAssets(a => [...a, { id: Date.now(), name: "", value: "" }]);
   const addHint = () => {
     if (!hintName) return;
     setAssets(a =>
-      a.some(x => x.name === hintName)
-        ? a
+      a.some(x => x.name === hintName) ? a
         : [...a.filter(x => x.name), { id: Date.now(), name: hintName, value: "" }]
     );
   };
-
-  const update = (id, field, val) =>
-    setAssets(a => a.map(x => x.id === id ? { ...x, [field]: val } : x));
-
-  const remove = (id) =>
-    setAssets(a => a.filter(x => x.id !== id));
-
-  const total = assets.reduce((s, a) => s + (parseFloat(a.value) || 0), 0);
+  const update = (id, field, val) => setAssets(a => a.map(x => x.id === id ? { ...x, [field]: val } : x));
+  const remove = (id) => setAssets(a => a.filter(x => x.id !== id));
+  const total  = assets.reduce((s, a) => s + (parseFloat(a.value) || 0), 0);
 
   return (
     <div>
@@ -536,10 +706,10 @@ function AssetValueSection({ assets, setAssets, surveyAnswers }) {
       </div>
 
       <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.7, margin: "0 0 16px" }}>
-        <strong style={{ color: TEXT_SEC }}>L</strong> is the total monetary loss your business would suffer in a breach — not just what you can afford to lose, but what a breach would actually cost. Gordon &amp; Loeb (2002) stress that underestimating L systematically underestimates how much security investment is warranted.
+        <strong style={{ color: TEXT_SEC }}>L</strong> is the total monetary loss your business would suffer in a breach.
+        Gordon &amp; Loeb (2002) stress that underestimating L systematically underestimates how much security investment is warranted.
       </p>
 
-      {/* Survey context */}
       {costCtx && (
         <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "12px 16px", marginBottom: 14 }}>
           <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.07em" }}>
@@ -549,7 +719,6 @@ function AssetValueSection({ assets, setAssets, surveyAnswers }) {
         </div>
       )}
 
-      {/* Loss categories */}
       <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 18px", marginBottom: 14 }}>
         <SectionLabel>Categories to include in L</SectionLabel>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: "5px 20px" }}>
@@ -572,7 +741,6 @@ function AssetValueSection({ assets, setAssets, surveyAnswers }) {
         </div>
       </div>
 
-      {/* Crown jewel hint */}
       {hintName && (
         <button
           onClick={addHint}
@@ -588,7 +756,6 @@ function AssetValueSection({ assets, setAssets, surveyAnswers }) {
         </button>
       )}
 
-      {/* Asset input rows */}
       {assets.map(a => (
         <div key={a.id} style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "center" }}>
           <input
@@ -604,9 +771,7 @@ function AssetValueSection({ assets, setAssets, surveyAnswers }) {
           <div style={{ flex: 1, display: "flex", alignItems: "center", position: "relative" }}>
             <span style={{ position: "absolute", left: 10, color: GOLD, fontWeight: 700, fontSize: 13, fontFamily: "monospace" }}>$</span>
             <input
-              type="number"
-              placeholder="0"
-              value={a.value}
+              type="number" placeholder="0" value={a.value}
               onChange={e => update(a.id, "value", e.target.value)}
               style={{
                 width: "100%", background: CARD, border: `1px solid ${BORDER}`,
@@ -616,10 +781,7 @@ function AssetValueSection({ assets, setAssets, surveyAnswers }) {
             />
           </div>
           {assets.length > 1 && (
-            <button
-              onClick={() => remove(a.id)}
-              style={{ background: "none", border: "none", color: CRIT + "80", cursor: "pointer", fontSize: 18, padding: "2px 6px" }}
-            >×</button>
+            <button onClick={() => remove(a.id)} style={{ background: "none", border: "none", color: CRIT + "80", cursor: "pointer", fontSize: 18, padding: "2px 6px" }}>×</button>
           )}
         </div>
       ))}
@@ -636,7 +798,7 @@ function AssetValueSection({ assets, setAssets, surveyAnswers }) {
 
       {total === 0 && (
         <InfoBox color={HIGH_C}>
-          Enter at least one asset value to see your full economic analysis. Even a rough estimate is useful — the model is designed to work with imperfect information and still produce meaningful guidance.
+          Enter at least one asset value to see your full economic analysis. Even a rough estimate is useful — the model is designed to work with imperfect information.
         </InfoBox>
       )}
     </div>
@@ -644,12 +806,17 @@ function AssetValueSection({ assets, setAssets, surveyAnswers }) {
 }
 
 // ─── Section 4: Live Results ──────────────────────────────────────────────────
-function ResultsSection({ v, L, model, currentSpend, setCurrentSpend, revenue, setRevenue }) {
+function ResultsSection({ v, vLow, vHigh, L, model, currentSpend, setCurrentSpend, revenue, setRevenue }) {
   const EL    = v * L;
+  const ELLow = vLow * L;
+  const ELHigh = vHigh * L;
   const cap   = GL_CAP * EL;
+  const capLow = GL_CAP * ELLow;
+  const capHigh = GL_CAP * ELHigh;
   const spend = parseFloat(currentSpend) || 0;
   const rev   = parseFloat(revenue) || 0;
   const vColor = v > 0.6 ? CRIT : v > 0.3 ? HIGH_C : LOW_C;
+  const hasCI = vLow !== v || vHigh !== v;
 
   const verdict = spend === 0   ? "no-spend"
     : spend < cap * 0.5         ? "severely-under"
@@ -667,95 +834,90 @@ function ResultsSection({ v, L, model, currentSpend, setCurrentSpend, revenue, s
   const vc = verdictCfg[verdict];
 
   const tiers = [
-    { p: 0.10,  label: "Conservative (10% of EL)", sub: "Address critical findings only — minimum viable security posture",           color: LOW_C  },
-    { p: 0.20,  label: "Moderate (20% of EL)",     sub: "Recommended for most SMEs — covers critical and high-severity findings",     color: HIGH_C },
-    { p: GL_CAP, label: "GL Maximum (1/e ≈ 37%)",  sub: "Economic ceiling — every dollar below this has positive expected net value", color: CRIT   },
+    { p: 0.10,  label: "Conservative (10% of EL)", sub: "Address critical findings only",           color: LOW_C  },
+    { p: 0.20,  label: "Moderate (20% of EL)",     sub: "Recommended for most SMEs",               color: HIGH_C },
+    { p: GL_CAP, label: "GL Maximum (1/e ≈ 37%)",  sub: "Economic ceiling — positive net value below this", color: CRIT   },
   ];
 
-  const mediumCount = model.findings.filter(f => f.severity === "medium").length;
+  const mediumCount = (model.findings || []).filter(f => f.severity === "medium").length;
 
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
         <span style={{ color: GOLD, fontFamily: "monospace", fontSize: 10, fontWeight: 700, letterSpacing: "0.1em" }}>z*</span>
         <span style={{ color: BORDER2, fontFamily: "monospace", fontSize: 10 }}>·</span>
-        <span style={{ color: TEXT_MUT, fontFamily: "monospace", fontSize: 10 }}>Economic Analysis — updates live as you enter values</span>
+        <span style={{ color: TEXT_MUT, fontFamily: "monospace", fontSize: 10 }}>Economic Analysis — updates live</span>
       </div>
 
       {/* Key stats */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
-        <StatBox label="Vulnerability (v)" value={v > 0 ? pct(v) : "—"} color={v > 0 ? vColor : undefined}
-          sub={v > 0.6 ? "High risk" : v > 0.3 ? "Moderate risk" : v > 0 ? "Lower risk" : "Not set"} />
+        <StatBox
+          label="Vulnerability (v)"
+          value={v > 0 ? pct(v) : "—"}
+          color={v > 0 ? vColor : undefined}
+          sub={v > 0 && hasCI ? `± ${(((vHigh - vLow) / 2) * 100).toFixed(1)}%` : v > 0 ? "manual" : "not set"}
+        />
         <StatBox label="Potential Loss (L)" value={L > 0 ? fmt(L) : "—"} />
-        <StatBox label="Expected Loss (v×L)" value={EL > 0 ? fmt(EL) : "—"} color={EL > 0 ? TEXT_SEC : undefined} />
-        <StatBox label="GL Investment Cap" value={cap > 0 ? fmt(cap) : "—"} color={cap > 0 ? GOLD : undefined} />
+        <StatBox label="Expected Loss (v×L)" value={EL > 0 ? fmt(EL) : "—"} color={EL > 0 ? TEXT_SEC : undefined}
+          sub={EL > 0 && hasCI ? `range: ${fmt(ELLow)} – ${fmt(ELHigh)}` : undefined} />
+        <StatBox label="GL Investment Cap" value={cap > 0 ? fmt(cap) : "—"} color={cap > 0 ? GOLD : undefined}
+          sub={cap > 0 && hasCI ? `range: ${fmt(capLow)} – ${fmt(capHigh)}` : undefined} />
       </div>
 
       {v === 0 && L === 0 && (
-        <InfoBox color={MED_C}>
-          Set your vulnerability (v) using the section above, then enter your asset value (L) to compute your investment ceiling.
-        </InfoBox>
+        <InfoBox color={MED_C}>Set your vulnerability (v) above, then enter your asset value (L) to compute your investment ceiling.</InfoBox>
       )}
-
       {v === 0 && L > 0 && (
-        <InfoBox color={HIGH_C}>
-          Asset value entered. Now add vulnerabilities or set v using the breach probability section above to compute your investment ceiling.
-        </InfoBox>
+        <InfoBox color={HIGH_C}>Asset value entered. Add vulnerabilities or set v above to compute your investment ceiling.</InfoBox>
       )}
-
       {v > 0 && L === 0 && (
-        <InfoBox color={HIGH_C}>
-          Vulnerability set to {pct(v)}. Enter your asset value (L) above to see your full economic analysis.
-        </InfoBox>
+        <InfoBox color={HIGH_C}>Vulnerability set to {pct(v)}. Enter your asset value (L) above to see your full economic analysis.</InfoBox>
       )}
 
       {L > 0 && v > 0 && (
         <>
           <FormulaBox>
             z* ≤ (1/e) × {pct(v)} × {fmt(L)} = {fmt(cap)}
+            {hasCI ? `  |  CI range: ${fmt(capLow)} – ${fmt(capHigh)}` : ""}
             {spend > 0 ? `  |  Current: ${fmt(spend)} (${spend <= cap ? "within cap ✓" : "above cap ⚠"})` : ""}
           </FormulaBox>
 
-          {/* Investment tiers */}
           <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 18px", marginBottom: 18 }}>
             <SectionLabel>Investment scenarios</SectionLabel>
             {tiers.map(t => (
-              <div key={t.label} style={{
-                display: "flex", alignItems: "center", gap: 12,
-                padding: "10px 0", borderBottom: `1px solid ${BORDER}`,
-              }}>
+              <div key={t.label} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: `1px solid ${BORDER}` }}>
                 <div style={{ width: 88, flexShrink: 0 }}>
                   <div style={{ height: 5, background: BORDER, borderRadius: 3, overflow: "hidden" }}>
                     <div style={{ width: `${(t.p / GL_CAP) * 100}%`, height: "100%", background: t.color, borderRadius: 3 }} />
                   </div>
-                  <div style={{ color: TEXT_MUT, fontSize: 9, fontFamily: "monospace", marginTop: 2 }}>
-                    {(t.p * 100).toFixed(0)}% of EL
-                  </div>
+                  <div style={{ color: TEXT_MUT, fontSize: 9, fontFamily: "monospace", marginTop: 2 }}>{(t.p * 100).toFixed(0)}% of EL</div>
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ color: TEXT_SEC, fontSize: 12, fontWeight: 700, fontFamily: "Georgia, serif" }}>{t.label}</div>
                   <div style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "Georgia, serif" }}>{t.sub}</div>
                 </div>
-                <div style={{ color: t.color, fontWeight: 700, fontSize: 15, fontFamily: "monospace", flexShrink: 0 }}>
-                  {fmt(t.p * EL)}
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div style={{ color: t.color, fontWeight: 700, fontSize: 15, fontFamily: "monospace" }}>{fmt(t.p * EL)}</div>
+                  {hasCI && (
+                    <div style={{ color: TEXT_MUT, fontSize: 9, fontFamily: "monospace", marginTop: 1 }}>
+                      {fmt(t.p * ELLow)} – {fmt(t.p * ELHigh)}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* GL insight */}
           <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "14px 18px", marginBottom: 18 }}>
-            <SectionLabel>Key insight — diminishing returns and moderate vulnerability</SectionLabel>
+            <SectionLabel>Key insight — diminishing returns</SectionLabel>
             <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.65, margin: 0 }}>
-              Gordon &amp; Loeb (2002) prove a counter-intuitive result:{" "}
-              <strong style={{ color: TEXT_SEC }}>the optimal investment does not always increase with vulnerability.</strong>{" "}
-              Extremely high-vulnerability systems are often the most expensive to harden — making the per-dollar return on additional security investment lower for the most exposed systems than for moderate ones.
+              Gordon &amp; Loeb (2002) prove that <strong style={{ color: TEXT_SEC }}>optimal investment does not always increase with vulnerability.</strong>{" "}
+              Extremely high-vulnerability systems are often the most expensive to harden — making the per-dollar return on additional security investment
+              lower for the most exposed systems than for moderate ones.
               {mediumCount > 0 && (
                 <span> Your{" "}
-                  <strong style={{ color: MED_C }}>
-                    {mediumCount} medium-severity finding{mediumCount !== 1 ? "s" : ""}
-                  </strong>{" "}
-                  may represent your highest-ROI remediation opportunities — addressable with targeted, lower-cost controls.
+                  <strong style={{ color: MED_C }}>{mediumCount} medium-severity finding{mediumCount !== 1 ? "s" : ""}</strong>{" "}
+                  may represent your highest-ROI remediation opportunities.
                 </span>
               )}
             </p>
@@ -763,75 +925,50 @@ function ResultsSection({ v, L, model, currentSpend, setCurrentSpend, revenue, s
         </>
       )}
 
-      {/* Current spend inputs */}
+      {/* Current spend */}
       <div style={{ background: BG, border: `1px solid ${BORDER}`, borderRadius: 8, padding: "16px 18px", marginBottom: cap > 0 ? 18 : 0 }}>
         <SectionLabel>Compare against your current security spend (optional)</SectionLabel>
-        <p style={{ color: TEXT_DIM, fontSize: 12, fontFamily: "Georgia, serif", lineHeight: 1.6, margin: "0 0 14px" }}>
-          Include software subscriptions, cyber insurance premiums, security-focused IT labor, awareness training, and backup/DR solutions.
-          Exclude general IT hardware and non-security software licenses.
-        </p>
         <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 160 }}>
-            <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>
-              Annual security budget
-            </div>
+            <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Annual security budget</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ color: GOLD, fontFamily: "monospace", fontWeight: 700 }}>$</span>
-              <input
-                type="number"
-                placeholder="0"
-                value={currentSpend}
-                onChange={e => setCurrentSpend(e.target.value)}
-                style={{
-                  flex: 1, background: CARD, border: `1px solid ${BORDER}`,
-                  borderRadius: 7, padding: "9px 12px",
-                  color: TEXT_PRI, fontSize: 15, fontFamily: "monospace",
-                }}
-              />
+              <input type="number" placeholder="0" value={currentSpend} onChange={e => setCurrentSpend(e.target.value)}
+                style={{ flex: 1, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 7, padding: "9px 12px", color: TEXT_PRI, fontSize: 15, fontFamily: "monospace" }} />
             </div>
           </div>
           <div style={{ flex: 1, minWidth: 160 }}>
-            <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>
-              Annual revenue (optional)
-            </div>
+            <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Annual revenue (optional)</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <span style={{ color: TEXT_MUT, fontFamily: "monospace", fontWeight: 700 }}>$</span>
-              <input
-                type="number"
-                placeholder="0"
-                value={revenue}
-                onChange={e => setRevenue(e.target.value)}
-                style={{
-                  flex: 1, background: CARD, border: `1px solid ${BORDER}`,
-                  borderRadius: 7, padding: "9px 12px",
-                  color: TEXT_PRI, fontSize: 15, fontFamily: "monospace",
-                }}
-              />
+              <input type="number" placeholder="0" value={revenue} onChange={e => setRevenue(e.target.value)}
+                style={{ flex: 1, background: CARD, border: `1px solid ${BORDER}`, borderRadius: 7, padding: "9px 12px", color: TEXT_PRI, fontSize: 15, fontFamily: "monospace" }} />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Verdict */}
       {cap > 0 && spend > 0 && (
-        <div style={{
-          background: vc.color + "0d",
-          border: `1px solid ${vc.color}30`,
-          borderLeft: `3px solid ${vc.color}`,
-          borderRadius: 8, padding: "16px 20px",
-        }}>
+        <div style={{ background: vc.color + "0d", border: `1px solid ${vc.color}30`, borderLeft: `3px solid ${vc.color}`, borderRadius: 8, padding: "16px 20px" }}>
           <div style={{ color: vc.color, fontSize: 11, fontFamily: "monospace", fontWeight: 700, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.08em" }}>
             {vc.icon} {vc.label}
           </div>
           <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.65, margin: 0 }}>
-            {verdict === "no-spend" && `With an expected loss of ${fmt(EL)} and no current security spend, your business absorbs the full weight of this risk uninsured. The Gordon–Loeb model recommends investing up to ${fmt(cap)} annually.`}
-            {verdict === "severely-under" && `Your current spend of ${fmt(spend)} is significantly below the GL-recommended range. With ${fmt(cap - spend)} of headroom remaining before the economic ceiling, every additional dollar of security investment within this range has a positive expected net return.`}
-            {verdict === "under" && `Your current spend of ${fmt(spend)} is ${fmt(cap - spend)} below the Gordon–Loeb ceiling of ${fmt(cap)}. Increasing investment up to this ceiling is economically justified — additional spend reduces expected loss by more than it costs.`}
-            {verdict === "over" && `Your current spend of ${fmt(spend)} is ${fmt(spend - cap)} above the Gordon–Loeb ceiling of ${fmt(cap)}. Compliance requirements, contractual obligations, or risk tolerance may justify this — but above the ceiling, diminishing returns apply.`}
-            {verdict === "optimal" && `Your current spend is near the Gordon–Loeb optimal range. Rather than increasing total budget, focus on directing existing spend toward the highest-priority findings to maximize risk reduction per dollar.`}
+            {verdict === "no-spend"       && `With an expected loss of ${fmt(EL)} and no current security spend, your business absorbs the full weight of this risk uninsured. The Gordon–Loeb model recommends investing up to ${fmt(cap)} annually.`}
+            {verdict === "severely-under" && `Your current spend of ${fmt(spend)} is significantly below the GL-recommended range. With ${fmt(cap - spend)} of headroom remaining before the economic ceiling, every additional dollar has a positive expected net return.`}
+            {verdict === "under"          && `Your current spend of ${fmt(spend)} is ${fmt(cap - spend)} below the Gordon–Loeb ceiling of ${fmt(cap)}. Increasing investment up to this ceiling is economically justified.`}
+            {verdict === "over"           && `Your current spend of ${fmt(spend)} is ${fmt(spend - cap)} above the Gordon–Loeb ceiling of ${fmt(cap)}. Above the ceiling, diminishing returns apply. Consider reallocating excess spend toward higher-ROI controls.`}
+            {verdict === "optimal"        && `Your current spend is near the Gordon–Loeb optimal range. Focus on directing existing spend toward the highest-priority findings to maximise risk reduction per dollar.`}
           </p>
-          {rev > 0 && (
+          {hasCI && cap > 0 && spend > 0 && (
             <div style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace", marginTop: 8 }}>
+              At the confidence interval bounds: GL cap range {fmt(capLow)} – {fmt(capHigh)}.
+              {spend < capLow && " Your spend is below even the lower CI bound — investment increase is strongly indicated."}
+              {spend > capHigh && " Your spend exceeds even the upper CI bound — diminishing returns apply across all scenarios."}
+            </div>
+          )}
+          {rev > 0 && (
+            <div style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace", marginTop: 6 }}>
               Security spend as % of revenue: {((spend / rev) * 100).toFixed(1)}%
               {spend / rev < 0.005 && " — below typical SME benchmark of 0.5–1.5%"}
             </div>
@@ -853,49 +990,53 @@ function PriorityActions({ findings }) {
 
   return (
     <div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+      <div style={{ marginBottom: 14 }}>
         <span style={{ color: TEXT_MUT, fontFamily: "monospace", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em" }}>
           Priority Actions — highest-impact findings
         </span>
       </div>
       <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.65, margin: "0 0 16px" }}>
-        These findings represent your most exploitable attack paths — the ones that contribute most to your breach probability (v) and that, if remediated, would deliver the largest reduction in expected loss per dollar spent.
+        These findings contribute most to breach probability (v). Each shows its CVSS exploitability profile alongside its v contribution.
       </p>
       {top.map(f => {
         const color = SEV_COLORS[f.severity] || TEXT_MUT;
+        const exploit = cvssExploitability(f);
         return (
-          <div key={f.id} style={{
-            background: BG, border: `1px solid ${BORDER}`,
-            borderLeft: `3px solid ${color}`,
-            borderRadius: 8, padding: "14px 18px", marginBottom: 10,
-          }}>
-            <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 8, flexWrap: "wrap" }}>
+          <div key={f.id} style={{ background: BG, border: `1px solid ${BORDER}`, borderLeft: `3px solid ${color}`, borderRadius: 8, padding: "14px 18px", marginBottom: 10 }}>
+            <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 6, flexWrap: "wrap" }}>
               <SevBadge sev={f.severity} />
-              <span style={{ color: TEXT_SEC, fontSize: 13, fontWeight: 700, fontFamily: "Georgia, serif", flex: 1 }}>
-                {f.name}
-              </span>
+              <span style={{ color: TEXT_SEC, fontSize: 13, fontWeight: 700, fontFamily: "Georgia, serif", flex: 1 }}>{f.name}</span>
               <span style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", flexShrink: 0 }}>
-                v contribution: +{pct(findingWeight(f))}
+                v: +{pct(findingWeight(f))}
               </span>
             </div>
+            {/* CVSS badges */}
+            {f.cvss_av && (
+              <div style={{ marginBottom: 8 }}>
+                <CVSSBadge label="AV" value={f.cvss_av} />
+                <CVSSBadge label="AC" value={f.cvss_ac} />
+                <CVSSBadge label="PR" value={f.cvss_pr} />
+                <CVSSBadge label="UI" value={f.cvss_ui} />
+                {exploit !== null && (
+                  <span style={{ fontSize: 9, fontFamily: "monospace", color: TEXT_MUT }}>
+                    exploit: {(exploit * 100).toFixed(0)}%
+                  </span>
+                )}
+              </div>
+            )}
             {f.recommendation && (
-              <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.6, margin: "0 0 8px" }}>
-                {f.recommendation}
-              </p>
+              <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.6, margin: "0 0 8px" }}>{f.recommendation}</p>
             )}
             {f.business_impact && (
-              <p style={{ color: TEXT_MUT, fontSize: 12, fontFamily: "Georgia, serif", lineHeight: 1.55, margin: "0 0 8px", fontStyle: "italic" }}>
-                {f.business_impact.slice(0, 160)}…
-              </p>
+              <p style={{ color: TEXT_MUT, fontSize: 12, fontFamily: "Georgia, serif", lineHeight: 1.55, margin: "0 0 8px", fontStyle: "italic" }}>{f.business_impact.slice(0, 160)}…</p>
             )}
-            {(f.attack_tactic || f.attack_technique || f.references?.length > 0) && (
+            {(f.attack_tactic || f.references?.length > 0) && (
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
                 {f.attack_tactic && <span style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace" }}>{f.attack_tactic}</span>}
-                {f.attack_technique && <span style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace" }}>{f.attack_technique}</span>}
                 {f.references?.map(r => (
                   <a key={r} href={r} target="_blank" rel="noreferrer"
                     style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", textDecoration: "underline", textDecorationColor: BORDER2 }}>
-                    {r.replace("https://", "").split("/")[0]}
+                    {r.trim().replace("https://", "").split("/")[0]}
                   </a>
                 ))}
               </div>
@@ -908,13 +1049,15 @@ function PriorityActions({ findings }) {
 }
 
 // ─── Report generator ─────────────────────────────────────────────────────────
-function generateReport({ v, L, EL, cap, spend, revenue, model, assets, extraFindings }) {
+function generateReport({ v, vLow, vHigh, L, EL, cap, spend, revenue, model, assets, extraFindings }) {
   const sevColors = { critical: "#e05c5c", high: "#e8a020", medium: "#5b8dd4", low: "#60b06e" };
   const allFindings = [...model.findings, ...extraFindings.filter(f => f.name)];
   const hasSurveyResults = model.summary.total_findings > 0;
-
   const scoreColor = model.summary.overall_risk_score >= 70 ? "#e05c5c"
     : model.summary.overall_risk_score >= 40 ? "#e8a020" : "#60b06e";
+  const hasCI = vLow !== v || vHigh !== v;
+  const capLow = GL_CAP * vLow * L;
+  const capHigh = GL_CAP * vHigh * L;
 
   const verdictText = spend === 0
     ? `No security budget detected. Expected loss: ${fmt(EL)}. Recommended investment: up to ${fmt(cap)} annually.`
@@ -927,8 +1070,9 @@ function generateReport({ v, L, EL, cap, spend, revenue, model, assets, extraFin
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
         <span style="background:${sevColors[f.severity]}22;border:1px solid ${sevColors[f.severity]}55;color:${sevColors[f.severity]};padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;font-family:monospace;">${f.severity}</span>
         <strong style="font-size:14px;font-family:Georgia,serif;">${f.name}</strong>
-        <span style="color:#666;font-size:11px;font-family:monospace;margin-left:auto;">v contribution: +${pct(findingWeight(f))}</span>
+        <span style="color:#666;font-size:11px;font-family:monospace;margin-left:auto;">v: +${pct(findingWeight(f))}</span>
       </div>
+      ${f.cvss_av ? `<div style="margin-bottom:8px;font-family:monospace;font-size:10px;color:#666;">AV:${f.cvss_av.toUpperCase()} AC:${f.cvss_ac.toUpperCase()} PR:${f.cvss_pr.toUpperCase()} UI:${f.cvss_ui.toUpperCase()}</div>` : ""}
       ${f.recommendation ? `<p style="margin:0 0 6px;font-size:13px;line-height:1.6;font-family:Georgia,serif;">${f.recommendation}</p>` : ""}
       ${f.business_impact ? `<p style="margin:0;font-size:12px;color:#666;font-style:italic;font-family:Georgia,serif;">${f.business_impact.slice(0,180)}…</p>` : ""}
     </div>`).join("");
@@ -941,11 +1085,11 @@ function generateReport({ v, L, EL, cap, spend, revenue, model, assets, extraFin
 
   const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
 <title>MicroSOC — Gordon-Loeb Economic Report</title>
-<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Georgia,serif;background:#fff;color:#1a202c;font-size:14px}.page{max-width:820px;margin:0 auto;padding:48px 40px}.header{background:#0b1117;color:#fff;padding:32px 40px;border-radius:10px;margin-bottom:32px}.header h1{font-size:22px;font-weight:800;color:#c8922a;margin-bottom:4px}.header .sub{color:#94a3b8;font-size:13px}.header .date{color:#4a5568;font-size:11px;margin-top:6px;font-family:monospace}h2{font-size:14px;font-weight:700;color:#0b1117;text-transform:uppercase;letter-spacing:.07em;margin:28px 0 12px;border-bottom:2px solid #c8922a;padding-bottom:6px}.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}.stat{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;flex:1;min-width:120px}.stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#718096;margin-bottom:4px;font-family:monospace}.stat .val{font-size:20px;font-weight:800;font-family:monospace}.stat.gold .val{color:#c8922a}.formula{background:#0b1117;color:#c8922a;padding:12px 18px;border-radius:6px;font-family:monospace;font-size:13px;margin:12px 0}.verdict{padding:14px 18px;border-radius:8px;margin:16px 0;border-left:3px solid #c8922a;background:#fffbeb;font-size:13px;line-height:1.65}table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}th{background:#0b1117;color:#94a3b8;text-align:left;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-family:monospace}td{padding:8px 12px}.citation{background:#f7fafc;border-left:3px solid #c8922a;padding:12px 16px;margin:12px 0;font-size:11px;color:#4a5568;font-style:italic;line-height:1.7}.footer{margin-top:48px;padding-top:16px;border-top:1px solid #e2e8f0;color:#718096;font-size:10px;text-align:center;font-family:monospace}@media print{.page{padding:20px}}</style>
+<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Georgia,serif;background:#fff;color:#1a202c;font-size:14px}.page{max-width:820px;margin:0 auto;padding:48px 40px}.header{background:#0b1117;color:#fff;padding:32px 40px;border-radius:10px;margin-bottom:32px}.header h1{font-size:22px;font-weight:800;color:#c8922a;margin-bottom:4px}.header .sub{color:#94a3b8;font-size:13px}h2{font-size:14px;font-weight:700;color:#0b1117;text-transform:uppercase;letter-spacing:.07em;margin:28px 0 12px;border-bottom:2px solid #c8922a;padding-bottom:6px}.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}.stat{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;flex:1;min-width:120px}.stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#718096;margin-bottom:4px;font-family:monospace}.stat .val{font-size:20px;font-weight:800;font-family:monospace}.stat.gold .val{color:#c8922a}.formula{background:#0b1117;color:#c8922a;padding:12px 18px;border-radius:6px;font-family:monospace;font-size:13px;margin:12px 0;white-space:pre-wrap}.verdict{padding:14px 18px;border-radius:8px;margin:16px 0;border-left:3px solid #c8922a;background:#fffbeb;font-size:13px;line-height:1.65}table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}th{background:#0b1117;color:#94a3b8;text-align:left;padding:8px 12px;font-size:10px;text-transform:uppercase;letter-spacing:.07em;font-family:monospace}td{padding:8px 12px}.ci-note{background:#f0f4ff;border-left:3px solid #5b8dd4;padding:10px 14px;margin:10px 0;font-size:12px;color:#4a5568;font-family:monospace}.citation{background:#f7fafc;border-left:3px solid #c8922a;padding:12px 16px;margin:12px 0;font-size:11px;color:#4a5568;font-style:italic;line-height:1.7}.footer{margin-top:48px;padding-top:16px;border-top:1px solid #e2e8f0;color:#718096;font-size:10px;text-align:center;font-family:monospace}</style>
 </head><body><div class="page">
 <div class="header"><h1>MicroSOC — Gordon-Loeb Economic Report</h1>
-<div class="sub">Cybersecurity Investment Analysis · PASTA + MITRE ATT&CK · Gordon-Loeb (2002)</div>
-<div class="date">Generated: ${new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})} · Framework: Gordon &amp; Loeb, ACM TISSEC 2002</div></div>
+<div class="sub">Cybersecurity Investment Analysis · CVSS v3.1 + Gordon-Loeb (2002) · PASTA + MITRE ATT&amp;CK</div>
+<div class="sub" style="margin-top:4px;font-family:monospace;font-size:11px;color:#4a5568;">Generated: ${new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"})}</div></div>
 <h2>Executive Summary</h2>
 <div class="stats">
   ${hasSurveyResults ? `<div class="stat"><div class="lbl">Risk Score</div><div class="val" style="color:${scoreColor}">${model.summary.overall_risk_score}/100</div></div>` : ""}
@@ -955,33 +1099,30 @@ function generateReport({ v, L, EL, cap, spend, revenue, model, assets, extraFin
   <div class="stat gold"><div class="lbl">GL Investment Cap</div><div class="val">${fmt(cap)}</div></div>
   ${spend > 0 ? `<div class="stat"><div class="lbl">Current Spend</div><div class="val">${fmt(spend)}</div></div>` : ""}
 </div>
-<div class="formula">z* ≤ (1/e) × v × L = 0.3679 × ${pct(v)} × ${fmt(L)} = ${fmt(cap)}</div>
+${hasCI ? `<div class="ci-note">Confidence interval (severity ±1 grade): v ${pct(vLow)} – ${pct(vHigh)} · EL ${fmt(vLow*L)} – ${fmt(vHigh*L)} · GL cap ${fmt(capLow)} – ${fmt(capHigh)}</div>` : ""}
+<div class="formula">z* ≤ (1/e) × v × L = 0.3679 × ${pct(v)} × ${fmt(L)} = ${fmt(cap)}${hasCI ? `\nCI range: ${fmt(capLow)} – ${fmt(capHigh)}` : ""}</div>
 <div class="verdict">${verdictText}</div>
 ${parseFloat(revenue) > 0 ? `<p style="font-size:12px;color:#718096;margin-top:8px;font-family:monospace;">Security spend as % of revenue: ${((spend/parseFloat(revenue))*100).toFixed(1)}%</p>` : ""}
-<h2>Findings (${allFindings.length}${extraFindings.filter(f=>f.name).length > 0 ? `, including ${extraFindings.filter(f=>f.name).length} entered manually` : ""})</h2>
+<h2>Findings (${allFindings.length}${extraFindings.filter(f=>f.name).length > 0 ? `, including ${extraFindings.filter(f=>f.name).length} manual` : ""})</h2>
 ${allFindings.length > 0 ? findingsHTML : "<p style='color:#718096;font-size:13px;'>No findings entered.</p>"}
 <h2>Asset Inventory (L = ${fmt(L)})</h2>
-<table>
-<tr><th>Asset / Loss Category</th><th style="text-align:right">Estimated Value</th></tr>
+<table><tr><th>Asset / Loss Category</th><th style="text-align:right">Estimated Value</th></tr>
 ${assetsHTML}
-<tr><td style="font-weight:700;padding:8px 12px;">Total (L)</td><td style="text-align:right;font-weight:800;color:#c8922a;font-family:monospace;padding:8px 12px;">${fmt(L)}</td></tr>
-</table>
+<tr><td style="font-weight:700;padding:8px 12px;">Total (L)</td><td style="text-align:right;font-weight:800;color:#c8922a;font-family:monospace;padding:8px 12px;">${fmt(L)}</td></tr></table>
 <h2>Investment Scenarios</h2>
-<table>
-<tr><th>Scenario</th><th style="text-align:right">Amount</th><th>Notes</th></tr>
-<tr><td style="padding:8px 12px;">Conservative (10%)</td><td style="text-align:right;padding:8px 12px;font-family:monospace;">${fmt(0.10*EL)}</td><td style="padding:8px 12px;">Address critical findings only</td></tr>
-<tr style="background:#f7fafc"><td style="padding:8px 12px;">Moderate (20%)</td><td style="text-align:right;padding:8px 12px;font-family:monospace;">${fmt(0.20*EL)}</td><td style="padding:8px 12px;">Recommended starting point for most SMEs</td></tr>
-<tr><td style="padding:8px 12px;font-weight:700;">GL Maximum (37%)</td><td style="text-align:right;padding:8px 12px;font-family:monospace;font-weight:700;color:#c8922a;">${fmt(cap)}</td><td style="padding:8px 12px;">Economic upper bound — positive net value below this</td></tr>
-${spend > 0 ? `<tr style="background:#f7fafc"><td style="padding:8px 12px;">Your current spend</td><td style="text-align:right;padding:8px 12px;font-family:monospace;">${fmt(spend)}</td><td style="padding:8px 12px;">${spend > cap ? "Above GL cap" : "Within GL range"}</td></tr>` : ""}
+<table><tr><th>Scenario</th><th style="text-align:right">Amount</th>${hasCI ? "<th style='text-align:right'>CI Range</th>" : ""}<th>Notes</th></tr>
+<tr><td style="padding:8px 12px;">Conservative (10%)</td><td style="text-align:right;padding:8px 12px;font-family:monospace;">${fmt(0.10*EL)}</td>${hasCI ? `<td style="text-align:right;padding:8px 12px;font-family:monospace;font-size:11px;color:#718096;">${fmt(0.10*vLow*L)} – ${fmt(0.10*vHigh*L)}</td>` : ""}<td style="padding:8px 12px;">Critical findings only</td></tr>
+<tr style="background:#f7fafc"><td style="padding:8px 12px;">Moderate (20%)</td><td style="text-align:right;padding:8px 12px;font-family:monospace;">${fmt(0.20*EL)}</td>${hasCI ? `<td style="text-align:right;padding:8px 12px;font-family:monospace;font-size:11px;color:#718096;">${fmt(0.20*vLow*L)} – ${fmt(0.20*vHigh*L)}</td>` : ""}<td style="padding:8px 12px;">Recommended for most SMEs</td></tr>
+<tr><td style="padding:8px 12px;font-weight:700;">GL Maximum (37%)</td><td style="text-align:right;padding:8px 12px;font-family:monospace;font-weight:700;color:#c8922a;">${fmt(cap)}</td>${hasCI ? `<td style="text-align:right;padding:8px 12px;font-family:monospace;font-size:11px;color:#718096;">${fmt(capLow)} – ${fmt(capHigh)}</td>` : ""}<td style="padding:8px 12px;">Economic upper bound</td></tr>
+${spend > 0 ? `<tr style="background:#f7fafc"><td style="padding:8px 12px;">Your current spend</td><td style="text-align:right;padding:8px 12px;font-family:monospace;">${fmt(spend)}</td>${hasCI ? "<td></td>" : ""}<td style="padding:8px 12px;">${spend > cap ? "Above GL cap" : "Within GL range"}</td></tr>` : ""}
 </table>
 <h2>Citations</h2>
 <div class="citation">
-Gordon, L. A., &amp; Loeb, M. P. (2002). The Economics of Information Security Investment. <em>ACM Transactions on Information and System Security, 5</em>(4), 438–457. https://doi.org/10.1145/581271.581274<br/><br/>
-Gordon, L. A., Loeb, M. P., Lucyshyn, W., &amp; Zhou, L. (2018). Empirical Evidence on the Determinants of Cybersecurity Investments in Private Sector Firms. <em>Journal of Information Science, 9</em>(2).<br/><br/>
+Gordon, L. A., &amp; Loeb, M. P. (2002). The Economics of Information Security Investment. <em>ACM Transactions on Information and System Security, 5</em>(4), 438–457.<br/><br/>
+NIST. (2019). Common Vulnerability Scoring System v3.1: Specification Document. FIRST.org. https://www.first.org/cvss/specification-document<br/><br/>
 Gordon, L. A., et al. (2020). Integrating cost–benefit analysis into the NIST Cybersecurity Framework via the Gordon–Loeb Model. <em>Journal of Cybersecurity, 6</em>(1), tyaa005.
 </div>
-<p style="margin-top:20px;font-size:12px;color:#718096;line-height:1.7;">This report is generated by MicroSOC for educational and planning purposes. It is not a substitute for a professional cybersecurity risk assessment.</p>
-<div class="footer">MicroSOC · PASTA + MITRE ATT&CK · Gordon-Loeb Economic Module · ${new Date().toISOString().slice(0,10)}</div>
+<div class="footer">MicroSOC · CVSS v3.1 + Gordon-Loeb Economic Module · ${new Date().toISOString().slice(0,10)}</div>
 </div></body></html>`;
 
   const blob = new Blob([html], { type: "text/html" });
@@ -995,7 +1136,6 @@ Gordon, L. A., et al. (2020). Integrating cost–benefit analysis into the NIST 
 
 // ─── Main export ──────────────────────────────────────────────────────────────
 export default function GordonLoebWalkthrough({ threatModel, surveyAnswers, onBack }) {
-  // Null-safe fallback — all sub-components receive `model`, never raw `threatModel`
   const model = threatModel ?? EMPTY_MODEL;
   const hasSurveyResults = model.summary.total_findings > 0;
 
@@ -1005,33 +1145,37 @@ export default function GordonLoebWalkthrough({ threatModel, surveyAnswers, onBa
   const [currentSpend,  setCurrentSpend]  = useState("");
   const [revenue,       setRevenue]       = useState("");
 
+  const validExtra = extraFindings.filter(f => f.name);
+  const allFindings = useMemo(() => [...model.findings, ...validExtra], [model.findings, validExtra]);
+
+  // Central v
   const v = useMemo(() => {
     if (manualV !== null) return manualV;
-    const base  = computeV(model.findings);
-    const extra = computeV(extraFindings.filter(f => f.name));
-    return Math.min(base + extra, 0.95);
-  }, [model.findings, extraFindings, manualV]);
+    return Math.min(computeV(model.findings) + computeV(validExtra), 0.95);
+  }, [model.findings, validExtra, manualV]);
+
+  // CI bounds
+  const { low: vLow, high: vHigh } = useMemo(() => {
+    if (manualV !== null) return { low: manualV, high: manualV };
+    return computeVBounds(allFindings);
+  }, [allFindings, manualV]);
 
   const L   = useMemo(() => assets.reduce((s, a) => s + (parseFloat(a.value) || 0), 0), [assets]);
   const EL  = v * L;
   const cap = GL_CAP * EL;
 
-  const allFindings = [...model.findings, ...extraFindings.filter(f => f.name)];
-
   return (
     <div style={{
-      minHeight: "100vh",
-      background: BG,
+      minHeight: "100vh", background: BG,
       backgroundImage: `
         radial-gradient(ellipse 60% 50% at 15% 0%,   rgba(200,146,42,0.04) 0%, transparent 60%),
         radial-gradient(ellipse 50% 40% at 85% 100%, rgba(91,141,212,0.04) 0%, transparent 60%)
       `,
-      fontFamily: "Georgia, serif",
-      padding: "48px 20px 100px",
+      fontFamily: "Georgia, serif", padding: "48px 20px 100px",
     }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }}>
 
-        {/* ── Page header ── */}
+        {/* Page header */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 22 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -1040,34 +1184,23 @@ export default function GordonLoebWalkthrough({ threatModel, surveyAnswers, onBa
                 MicroSOC · Economic Analysis
               </span>
             </div>
-            <button
-              onClick={onBack}
-              style={{
-                background: "none", border: `1px solid ${BORDER}`, borderRadius: 6,
-                color: TEXT_DIM, cursor: "pointer", fontSize: 12,
-                padding: "5px 14px", fontFamily: "Georgia, serif",
-              }}
-            >
+            <button onClick={onBack} style={{ background: "none", border: `1px solid ${BORDER}`, borderRadius: 6, color: TEXT_DIM, cursor: "pointer", fontSize: 12, padding: "5px 14px", fontFamily: "Georgia, serif" }}>
               {hasSurveyResults ? "← Back to threat report" : "← Home"}
             </button>
           </div>
           <h1 style={{ fontSize: 36, color: TEXT_PRI, margin: "0 0 6px", lineHeight: 1.1, fontWeight: 700, letterSpacing: "-0.5px" }}>
             Gordon–Loeb Investment Model
           </h1>
-          <p style={{ color: TEXT_DIM, fontSize: 15, margin: 0, lineHeight: 1.7, maxWidth: 560 }}>
+          <p style={{ color: TEXT_DIM, fontSize: 15, margin: 0, lineHeight: 1.7, maxWidth: 600 }}>
             {hasSurveyResults
-              ? <>Your <strong style={{ color: TEXT_SEC }}>{model.summary.total_findings} confirmed findings</strong> feed directly into this analysis. Enter your asset value to see your complete investment picture.</>
-              : <>Enter your vulnerabilities and asset value below to compute your optimal cybersecurity investment ceiling using the Gordon–Loeb model.</>
+              ? <>Your <strong style={{ color: TEXT_SEC }}>{model.summary.total_findings} confirmed findings</strong> drive this analysis via <strong style={{ color: TEXT_SEC }}>CVSS v3.1 exploitability scoring</strong>, producing a breach probability with a confidence interval. Enter your asset value to compute your investment ceiling.</>
+              : <>Enter your vulnerabilities and asset value to compute your optimal cybersecurity investment ceiling using the Gordon–Loeb model.</>
             }
           </p>
         </div>
 
-        {/* ── Main card ── */}
-        <div style={{
-          background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16,
-          padding: "36px 44px",
-          boxShadow: "0 8px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03)",
-        }}>
+        {/* Main card */}
+        <div style={{ background: CARD, border: `1px solid ${BORDER}`, borderRadius: 16, padding: "36px 44px", boxShadow: "0 8px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.03)" }}>
 
           <GLIntro model={model} />
           <Divider />
@@ -1081,21 +1214,14 @@ export default function GordonLoebWalkthrough({ threatModel, surveyAnswers, onBa
           />
           <Divider />
 
-          <AssetValueSection
-            assets={assets}
-            setAssets={setAssets}
-            surveyAnswers={surveyAnswers}
-          />
+          <AssetValueSection assets={assets} setAssets={setAssets} surveyAnswers={surveyAnswers} />
           <Divider />
 
           <ResultsSection
-            v={v}
-            L={L}
-            model={model}
-            currentSpend={currentSpend}
-            setCurrentSpend={setCurrentSpend}
-            revenue={revenue}
-            setRevenue={setRevenue}
+            v={v} vLow={vLow} vHigh={vHigh}
+            L={L} model={model}
+            currentSpend={currentSpend} setCurrentSpend={setCurrentSpend}
+            revenue={revenue} setRevenue={setRevenue}
           />
 
           {allFindings.length > 0 && L > 0 && (
@@ -1113,26 +1239,22 @@ export default function GordonLoebWalkthrough({ threatModel, surveyAnswers, onBa
             <p style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "Georgia, serif", lineHeight: 1.8, margin: 0, fontStyle: "italic" }}>
               Gordon, L. A., &amp; Loeb, M. P. (2002). The Economics of Information Security Investment.{" "}
               <em>ACM Transactions on Information and System Security, 5</em>(4), 438–457.<br />
-              Gordon, L. A., Loeb, M. P., Lucyshyn, W., &amp; Zhou, L. (2018). Empirical Evidence on the
-              Determinants of Cybersecurity Investments in Private Sector Firms.{" "}
-              <em>Journal of Information Science, 9</em>(2).<br />
-              Gordon, L. A., et al. (2020). Integrating cost–benefit analysis into the NIST Cybersecurity
-              Framework via the Gordon–Loeb Model. <em>Journal of Cybersecurity, 6</em>(1), tyaa005.
+              NIST. (2019). Common Vulnerability Scoring System v3.1: Specification Document. FIRST.org.<br />
+              Gordon, L. A., et al. (2020). Integrating cost–benefit analysis into the NIST Cybersecurity Framework via the Gordon–Loeb Model.{" "}
+              <em>Journal of Cybersecurity, 6</em>(1), tyaa005.
             </p>
           </div>
 
           {/* Download */}
           <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 28, paddingTop: 24, borderTop: `1px solid ${BORDER}` }}>
             <button
-              onClick={() => generateReport({ v, L, EL, cap, spend: parseFloat(currentSpend)||0, revenue, model, assets, extraFindings })}
+              onClick={() => generateReport({ v, vLow, vHigh, L, EL, cap, spend: parseFloat(currentSpend)||0, revenue, model, assets, extraFindings })}
               disabled={L === 0}
               style={{
                 padding: "12px 28px", borderRadius: 8, border: "none",
-                background: L > 0 ? GOLD : BORDER,
-                color: L > 0 ? "#0b1117" : TEXT_MUT,
-                cursor: L > 0 ? "pointer" : "not-allowed",
-                fontSize: 14, fontWeight: 700, fontFamily: "Georgia, serif",
-                boxShadow: L > 0 ? `0 2px 16px ${GOLD}44` : "none",
+                background: L > 0 ? GOLD : BORDER, color: L > 0 ? "#0b1117" : TEXT_MUT,
+                cursor: L > 0 ? "pointer" : "not-allowed", fontSize: 14, fontWeight: 700,
+                fontFamily: "Georgia, serif", boxShadow: L > 0 ? `0 2px 16px ${GOLD}44` : "none",
                 transition: "all 0.2s",
               }}
             >
