@@ -1185,7 +1185,7 @@ export default function GordonLoebWalkthrough({ threatModel, surveyAnswers, onBa
               </span>
             </div>
             <button onClick={onBack} style={{ background: "none", border: `1px solid ${BORDER}`, borderRadius: 6, color: TEXT_DIM, cursor: "pointer", fontSize: 12, padding: "5px 14px", fontFamily: "Georgia, serif" }}>
-              {hasSurveyResults ? "← Back to threat report" : "← Home"}
+              {hasSurveyResults ? "← Back to home (download your report first!)" : "← Home"}
             </button>
           </div>
           <h1 style={{ fontSize: 36, color: TEXT_PRI, margin: "0 0 6px", lineHeight: 1.1, fontWeight: 700, letterSpacing: "-0.5px" }}>

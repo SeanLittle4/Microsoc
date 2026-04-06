@@ -307,13 +307,11 @@ ${mode !== "flagged-only" ? `<h2>All ${total} Checks</h2>${rules.map(r => ruleHT
 <div class="footer">MicroSOC · PASTA + MITRE ATT&amp;CK · Misconfiguration Module · ${new Date().toISOString().slice(0,10)}</div>
 </div></body></html>`;
 
-  const blob = new Blob([html], { type: "text/html" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.download = `MicroSOC_MisconfigReport_${new Date().toISOString().slice(0,10)}.html`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const win = window.open("", "_blank");
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 500);
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
