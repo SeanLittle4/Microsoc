@@ -379,6 +379,7 @@ export default function Home({ onStartSurvey, onOpenMisconfig, onOpenEconomic, l
                 { n: "27",  label: "Security checks",      color: "#1fda47"},
                 { n: "7",   label: "Step PASTA Model",  color: MED_C  },
                 { n: "100%", label: "All data stays local", color: GOLD  },
+                { n: "15", label: "Minutes to complete the survey", color: "#1fbeda"  },
                 { n: "Free", label: "No account required",  color: LOW_C },
               ].map(({ n, label, color }) => (
                 <div key={label} style={{
@@ -422,6 +423,7 @@ export default function Home({ onStartSurvey, onOpenMisconfig, onOpenEconomic, l
               { framework: "NIST CSF",      desc: "National Institute of Standards and Technology Cybersecurity Framework - Control mappings and remediation guidance" },
               { framework: "Gordon–Loeb",   desc: "Research-backed economic model used to determine optimal cyber security investment" },
               { framework: "CISA / FBI IC3", desc: "Cybersecurity and Infrastructure Agency / FBI Internet Crime Complaint Center - Real-world SME threat intelligence and advisory data" },
+              { framework: "CVSS Scoring", desc: "The Common Vulnerability Scoring System rates vulnerability severity on a scale of 0–10. Scores of 9.0–10.0 are Critical, 7.0–8.9 are High, 4.0–6.9 are Medium, and 0.1–3.9 are Low."}
             ].map(({ framework, desc }) => (
               <div key={framework} style={{ minWidth: 150, flex: 1 }}>
                 <div style={{ color: TEXT_SEC, fontSize: 12, fontWeight: 700, fontFamily: "monospace", marginBottom: 3 }}>{framework}</div>

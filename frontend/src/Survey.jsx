@@ -63,12 +63,12 @@ const SECTIONS = [
       },
       {
         id: "crown_jewel",
-        pastaNote: "Identifies primary business asset — the targets most prized by attackers",
+        pastaNote: "Identifies primary business asset, the targets most prized by attackers",
         text: "If a cyberattack succeeded tomorrow, which outcome would be most harmful to your business?",
         hint: "Think about what would force you to close, face lawsuits, lose your customers' trust, or damage your corporate reputation.",
         options: [
-          "Theft of customer data — lawsuits, lost trust, regulatory fines",
-          "Loss of access to our systems — unable to operate for days or weeks",
+          "Theft of customer data, lawsuits, lost trust, regulatory fines",
+          "Loss of access to our systems; unable to operate for days or weeks",
           "Theft of money directly from bank or payment accounts",
           "Exposure of confidential contracts, pricing, or business strategies",
           "Reputational damage from public breach notification",
@@ -139,7 +139,7 @@ const SECTIONS = [
     icon: "II",
     title: "Your Technology Environment",
     subtitle:
-      "PASTA Stage 2 maps the technical boundaries of your business. Attackers use reconnaissance (TA0043) to profile your public-facing systems before choosing an initial access path (TA0001).",
+      "PASTA Stage 2 maps the technical boundaries of your business. Attackers use reconnaissance to profile your public-facing systems before choosing an initial access path.",
     questions: [
       {
         id: "infra_model",
@@ -176,7 +176,7 @@ const SECTIONS = [
         options: [
           "Company-owned and managed devices only",
           "Primarily company devices, but some personal devices are used too",
-          "Mix of company and personal devices — no formal policy",
+          "Mix of company and personal devices, no formal policy",
           "Mostly personal devices (bring your own device)",
           "I'm not sure",
         ],
@@ -190,11 +190,11 @@ const SECTIONS = [
         options: [
           "Business website or web application",
           "Email system (people can email you from outside)",
-          "Remote desktop — employees connect to office computers from home",
+          "Remote desktop, employees connect to office computers from home",
           "Client portal or customer login page",
           "File sharing links accessible via the web",
           "VPN gateway for remote employee access",
-          "None — everything requires being on-site",
+          "None, everything requires being on-site",
           "I'm not sure what's exposed",
         ],
       },
@@ -256,7 +256,7 @@ const SECTIONS = [
     icon: "III",
     title: "Data Flows & Trust Boundaries",
     subtitle:
-      "PASTA Stage 3 maps every path data travels and every person or system that touches it. These are your trust boundaries — each one is a potential entry point for initial access.",
+      "PASTA Stage 3 maps every path data travels and every person or system that touches it. These are your trust boundaries, each one is a potential entry point for initial access.",
     questions: [
       {
         id: "data_movement",
@@ -316,8 +316,8 @@ const SECTIONS = [
         pastaNote: "Stale accounts are high-value credential targets; ghost access is a persistent risk",
         text: "When an employee or contractor leaves your company, how quickly are their accounts and access removed?",
         options: [
-          "Immediately on their last day — we have a formal checklist",
-          "Within a few days — someone handles it eventually",
+          "Immediately on their last day, we have a formal checklist",
+          "Within a few days, someone handles it eventually",
           "We try to remember, but it varies and isn't tracked",
           "We don't have a formal process for revoking access",
           "I'm not sure if past employees still have access",
@@ -326,7 +326,7 @@ const SECTIONS = [
       {
         id: "customer_pii",
         pastaNote: "PII collection creates regulatory and breach notification obligations",
-        text: "Does your business collect and store personal information about customers — such as names, addresses, emails, or payment details?",
+        text: "Does your business collect and store personal information about customers such as names, addresses, emails, or payment details?",
         options: [
           "Yes — and we have a clear privacy policy and process for handling it",
           "Yes — but we don't have a formal process for managing or protecting it",
@@ -380,7 +380,7 @@ const SECTIONS = [
     icon: "IV",
     title: "Threat Actors & Attack Vectors",
     subtitle:
-      "PASTA Stage 4 identifies who would realistically attack your business and how. Most SME breaches start with phishing (TA0001) or stolen credentials (TA0006) — not sophisticated hacking.",
+      "PASTA Stage 4 identifies who would realistically attack your business and how. Most SME breaches start with phishing or stolen credentials, not sophisticated hacking.",
     questions: [
       {
         id: "phishing_posture",
@@ -410,7 +410,7 @@ const SECTIONS = [
         id: "email_domain_auth",
         pastaNote: "DMARC/SPF/DKIM absence allows attackers to send email appearing to come from your exact domain",
         text: "Has anyone set up protections to prevent attackers from sending emails that appear to come from your business's email address?",
-        hint: "This is called email authentication (SPF, DKIM, and DMARC). Without it, an attacker can send a fake invoice or payment request and your customers or partners will see your real email address as the sender — with no way to tell it's fraudulent.",
+        hint: "This is called email authentication (SPF, DKIM, and DMARC). Without it, an attacker can send a fake invoice or payment request and your customers or partners will see your real email address as the sender, with no way to tell it's fraudulent.",
         options: [
             "Yes — our IT provider or email admin has confirmed SPF, DKIM, and DMARC are configured",
             "We have an IT provider but I'm not sure if they've set this up",
@@ -433,8 +433,8 @@ const SECTIONS = [
       },
       {
         id: "credential_reuse",
-        pastaNote: "Credential stuffing (TA0006) exploits reused passwords from other breached services",
-        text: "Do employees use the same or similar passwords across multiple accounts — personal and work?",
+        pastaNote: "Credential stuffing exploits reused passwords from other breached services",
+        text: "Do employees use the same or similar passwords across multiple accounts, personal and work?",
         options: [
           "No — we require unique passwords and use a password manager",
           "We have a password policy but can't verify compliance",
@@ -447,7 +447,7 @@ const SECTIONS = [
         id: "social_engineering",
         pastaNote: "Vishing and impersonation attacks target employees with high access and low training",
         text: "Could an attacker call your office, pretend to be IT support or a vendor, and convince an employee to reveal a password or grant access?",
-        hint: "This is called social engineering — it exploits trust rather than technology.",
+        hint: "This is called social engineering; it exploits trust rather than technology.",
         options: [
           "Unlikely — employees are trained to verify identity through official channels",
           "Possibly — employees might comply without formal verification",
@@ -460,21 +460,21 @@ const SECTIONS = [
         pastaNote: "Physical access bypasses all digital controls",
         text: "What physical security controls does your business have in place to protect computers and servers from unauthorized access?",
         options: [
-          "Locked office with badge or key access — visitors are always supervised",
+          "Locked office with badge or key access; visitors are always supervised",
           "Locked office but access isn't strictly controlled",
-          "Open environment — physical access to computers is not restricted",
-          "Fully remote — no central office or physical equipment to secure",
+          "Open environment, physical access to computers is not restricted",
+          "Fully remote, no central office or physical equipment to secure",
         ],
       },
       {
         id: "visitor_tracking",
         pastaNote: "Untracked external visitors are an insider threat and physical recon vector",
-        text: "Does your business track or log non-employee visitors to your workplace — such as suppliers, contractors, or repair technicians?",
+        text: "Does your business track or log non-employee visitors to your workplace such as suppliers, contractors, or repair technicians?",
         options: [
           "Yes — all visitors sign in and are escorted",
           "Informally — we generally know who is in the building but don't log it",
           "No — visitors come and go without a formal process",
-          "We are fully remote — this isn't applicable",
+          "We are fully remote, this isn't applicable",
         ],
       },
       {
@@ -506,12 +506,12 @@ const SECTIONS = [
       {
         id: "mfa",
         pastaNote: "Lack of MFA enforcement is exploited in >80% of cloud identity compromises",
-        text: "Is multi-factor verification (also called MFA or 2FA) required to log into your most critical systems?",
-        hint: "MFA means logging in requires both a password AND a second step — like a code sent to your phone.",
+        text: "Is multi-factor authentication (also called MFA or 2FA) required to log into your most critical systems?",
+        hint: "MFA means logging in requires both a password AND a second step. like a code sent to your phone.",
         options: [
           "Yes — required for all accounts without exception",
           "Yes — required for some accounts (e.g., email) but not others",
-          "It's available but optional — employees decide whether to use it",
+          "It's available but optional; employees decide whether to use it",
           "No — we rely on passwords only",
           "I'm not sure",
         ],
@@ -519,7 +519,7 @@ const SECTIONS = [
       {
         id: "admin_access",
         pastaNote: "Excessive admin accounts expand TA0004 privilege escalation surface",
-        text: "Who in your organization has administrator-level access — the ability to change system settings, create accounts, or manage other users?",
+        text: "Who in your organization has administrator-level access; the ability to change system settings, create accounts, or manage other users?",
         options: [
           "Only one dedicated IT person or administrator",
           "A small group of 2–4 IT staff",
@@ -532,7 +532,7 @@ const SECTIONS = [
         id: "least_privilege",
         pastaNote: "Overprivileged accounts are primary targets for lateral movement post-compromise",
         text: "Do employees only have access to the files, systems, and accounts they actually need for their specific job?",
-        hint: "This is called 'least privilege' — limiting what each person can access reduces damage if their account is compromised.",
+        hint: "This is called 'least privilege', limiting what each person can access reduces damage if their account is compromised.",
         options: [
           "Yes — access is strictly controlled based on job role",
           "Mostly — but some people have broader access than necessary",
@@ -542,7 +542,7 @@ const SECTIONS = [
       },
       {
         id: "patching",
-        pastaNote: "Unpatched systems are the primary vector for exploitation of known vulnerabilities (TA0005)",
+        pastaNote: "Unpatched systems are the primary vector for exploitation of known vulnerabilities",
         text: "How are software updates and security patches applied to computers and systems in your business?",
         options: [
           "Automatically — updates install themselves without employee action",
@@ -554,7 +554,7 @@ const SECTIONS = [
       },
       {
         id: "legacy_auth",
-        pastaNote: "Legacy auth protocols bypass MFA and Conditional Access — a top Entra/M365 risk",
+        pastaNote: "Legacy auth protocols bypass MFA and Conditional Access, a top Entra/M365 risk",
         text: "Do any of your systems or email applications use older connection methods that might bypass security checks?",
         hint: "Examples: older versions of Outlook, email apps that use basic protocols (IMAP/POP3), or software that doesn't support two-step login.",
         options: [
@@ -568,7 +568,7 @@ const SECTIONS = [
         id: "admin_daily_use",
         pastaNote: "Admin accounts used for daily tasks dramatically increase compromise blast radius",
         text: "Do the people with administrator access use their admin account for everyday tasks like email and browsing, or do they have a separate regular account for daily use?",
-        hint: "Best practice is to have two accounts — a regular one for daily work and a separate admin account only used when making system changes.",
+        hint: "Best practice is to have two accounts: a regular one for daily work and a separate admin account only used when making system changes.",
         options: [
           "Admins use a separate regular account for daily tasks",
           "Admins use their admin account for everything including daily work",
@@ -612,7 +612,7 @@ const SECTIONS = [
     icon: "VI",
     title: "How Far Could an Attack Spread?",
     subtitle:
-      "PASTA Stage 6 simulates realistic attack chains. Once inside, attackers move laterally (TA0008), steal data (TA0010), or deploy ransomware (TA0040). These questions map how far they could go.",
+      "PASTA Stage 6 simulates realistic attack chains. Once inside, attackers move laterally, steal data, or deploy ransomware. These questions map how far they could go.",
     questions: [
       {
         id: "network_segmentation",
@@ -652,12 +652,12 @@ const SECTIONS = [
       },
       {
         id: "backups",
-        pastaNote: "Ransomware impact (TA0040) is catastrophic without tested, offline backups",
+        pastaNote: "Ransomware impact is catastrophic without tested, offline backups",
         text: "How does your business back up important files and data?",
         options: [
-          "Automated daily backups stored separately from primary systems — regularly tested",
+          "Automated daily backups stored separately from primary systems, regularly tested",
           "Regular backups exist but we haven't tested whether they can actually be restored",
-          "Occasional, informal backups — no consistent schedule or testing",
+          "Occasional, informal backups; no consistent schedule or testing",
           "We rely on cloud sync (e.g., OneDrive, Google Drive) as our only backup",
           "We don't have a formal backup process",
           "I'm not sure what our backup situation is",
@@ -687,13 +687,13 @@ const SECTIONS = [
     icon: "VII",
     title: "Business Risk & Recovery Capability",
     subtitle:
-      "PASTA Stage 7 translates technical threats into business impact. Attackers exploit poor visibility (TA0005) to stay hidden for weeks. This section identifies your detection gaps and real-world resilience.",
+      "PASTA Stage 7 translates technical threats into business impact. Attackers exploit poor visibility to stay hidden for weeks. This section identifies your detection gaps and real-world resilience.",
     questions: [
       {
         id: "logging",
         pastaNote: "Login audit logs are required to detect TA0001, TA0006, and lateral movement post-incident",
         text: "Does your business log or record who logs into systems, from where, and when?",
-        hint: "Login logs let you trace what happened during a breach — without them, you may never know the full extent of a compromise.",
+        hint: "Login logs let you trace what happened during a breach. Without them, you may never know the full extent of a compromise.",
         options: [
           "Yes — login logs are collected and reviewed regularly",
           "Yes — logs are collected but rarely if ever reviewed",
@@ -750,12 +750,12 @@ const SECTIONS = [
       {
         id: "power_resilience",
         pastaNote: "Power outages without UPS cause data loss and corrupt systems",
-        text: "Does your business have any protection against sudden power outages — such as an uninterruptible power supply (UPS) for critical equipment?",
+        text: "Does your business have any protection against sudden power outages such as an uninterruptible power supply (UPS) for critical equipment?",
         hint: "A UPS is a battery backup that keeps computers and servers running long enough to save data and shut down safely if power is lost.",
         options: [
           "Yes — critical equipment has UPS protection",
           "No — a power outage would immediately cut off all equipment",
-          "We are fully cloud-based — power outages only affect our internet connection",
+          "We are fully cloud-based; power outages only affect our internet connection",
           "I'm not sure",
         ],
       },
@@ -794,15 +794,38 @@ const PastaStageMap = ({ current }) => (
   </div>
 );
 
-const AttackBadge = ({ tactic }) => (
-  <span style={{
-    display: "inline-block", padding: "2px 8px", borderRadius: 3, marginRight: 6, marginBottom: 4,
-    background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
-    color: "#4a6278", fontSize: 10, fontFamily: "monospace", letterSpacing: "0.05em",
-  }}>
-    {tactic}
-  </span>
-);
+const AttackBadge = ({ tactic }) => {
+  const match = tactic.match(/(TA\d{4})/);
+  if (!match) {
+    // No MITRE ID found (e.g. "Detection Gaps") — render as plain badge
+    return (
+      <span style={{
+        display: "inline-block", padding: "2px 8px", borderRadius: 3, marginRight: 6, marginBottom: 4,
+        background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+        color: "#4a6278", fontSize: 10, fontFamily: "monospace", letterSpacing: "0.05em",
+      }}>
+        {tactic}
+      </span>
+    );
+  }
+
+  const id = match[1];
+  const url = `https://attack.mitre.org/tactics/${id}/`;
+  const label = tactic.replace(id, "").trim(); // e.g. "– Reconnaissance"
+
+  return (
+    <span style={{
+      display: "inline-block", padding: "2px 8px", borderRadius: 3, marginRight: 6, marginBottom: 4,
+      background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
+      color: "#4a6278", fontSize: 10, fontFamily: "monospace", letterSpacing: "0.05em",
+    }}>
+      <a href={url} target="_blank" rel="noreferrer"
+        style={{ color: "#4a6278", textDecoration: "underline", textDecorationColor: "#2a3d50" }}>
+        {tactic}
+      </a>
+    </span>
+  );
+};
 
 const ChoiceBtn = ({ label, selected, onClick, multi }) => (
   <button onClick={onClick} style={{
@@ -840,7 +863,7 @@ const Question = ({ q, qi, accentColor, answer, onAnswer, onToggle }) => (
         </span>
         {q.pastaNote && (
           <span style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace", fontStyle: "italic" }}>
-            ↳ {q.pastaNote}
+             {q.pastaNote}
           </span>
         )}
       </div>
@@ -1057,13 +1080,7 @@ const ThreatReport = ({ threatModel, onLaunchEconomic, onLaunchMisconfig }) => {
   </body>
   </html>`;
 
-    const blob = new Blob([html], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `microsoc-threat-report-${new Date().toISOString().split("T")[0]}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
+    return html;
   };
 
   const downloadHTML = () => {
@@ -1485,7 +1502,7 @@ export default function App({onGoHome}) {
 
                 {/* ── UPDATED: Complete button uses handleComplete ── */}
                 <button
-                  onClick={() => { if (!canAdvance) return; isLast ? handleComplete() : setSIdx(s => s + 1); }}
+                  onClick={() => { if (!canAdvance) return; isLast ? handleComplete() : setSIdx(s => s + 1); window.scrollTo(0, 0)}}
                   disabled={!canAdvance || loading}
                   style={{
                     padding: "11px 28px", borderRadius: 8, border: "none",
