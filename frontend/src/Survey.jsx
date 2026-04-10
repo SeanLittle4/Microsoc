@@ -397,7 +397,7 @@ const SECTIONS = [
       },
       {
         id: "email_filtering",
-        pastaNote: "Email filtering reduces TA0001 surface area; absence dramatically increases risk",
+        pastaNote: "Email filtering reduces the phishing attack surface area; its absence dramatically increases risk",
         text: "Does your email system automatically scan for malicious attachments and suspicious links?",
         options: [
           "Yes — our email scans attachments and warns about dangerous links",
@@ -409,8 +409,8 @@ const SECTIONS = [
       {
         id: "email_domain_auth",
         pastaNote: "DMARC/SPF/DKIM absence allows attackers to send email appearing to come from your exact domain",
-        text: "Has anyone set up protections to prevent attackers from sending emails that appear to come from your business's email address?",
-        hint: "This is called email authentication (SPF, DKIM, and DMARC). Without it, an attacker can send a fake invoice or payment request and your customers or partners will see your real email address as the sender, with no way to tell it's fraudulent.",
+        text: "Has anyone set up protections to prevent attackers from sending emails that appear to come from your business's email address?", 
+        hint: "The key words to know here are Sender Policy Framework (SPF); Domain Based Message Authentication, Reporting, and Conformance (DMARC); and Domain Keys Identified Mail (DKIM). This is called email authentication (SPF, DKIM, and DMARC). Without it, an attacker can send a fake invoice or payment request and your customers or partners will see your real email address as the sender, with no way to tell it's fraudulent. You can check your mail authentication settings at https://mxtoolbox.com/dmarc/dmarc-email-tools.",
         options: [
             "Yes — our IT provider or email admin has confirmed SPF, DKIM, and DMARC are configured",
             "We have an IT provider but I'm not sure if they've set this up",
@@ -518,7 +518,7 @@ const SECTIONS = [
       },
       {
         id: "admin_access",
-        pastaNote: "Excessive admin accounts expand TA0004 privilege escalation surface",
+        pastaNote: "Excessive admin accounts increase the risk an attacker can escalate privileges during a compromise",
         text: "Who in your organization has administrator-level access; the ability to change system settings, create accounts, or manage other users?",
         options: [
           "Only one dedicated IT person or administrator",
@@ -578,7 +578,7 @@ const SECTIONS = [
       },
       {
         id: "firewall",
-        pastaNote: "Firewall is the primary network perimeter control; default configs are often insecure",
+        pastaNote: "Firewall is the primary network perimeter control; default configurations are often insecure",
         text: "Does your business have a firewall protecting your network, and has it been configured beyond the factory defaults?",
         hint: "A firewall controls what traffic is allowed in and out of your network. Most routers include one but it needs to be properly configured.",
         options: [
@@ -629,7 +629,7 @@ const SECTIONS = [
       },
       {
         id: "data_exfil_controls",
-        pastaNote: "Absence of DLP controls enables TA0010 exfiltration via email, USB, and cloud sync",
+        pastaNote: "Absence of data loss prevention controls enables exfiltration via email, USB, and cloud sync",
         text: "Can employees copy or transfer sensitive company files to personal devices, personal cloud storage, or USB drives?",
         options: [
           "No — this is technically blocked and enforced by policy",
@@ -691,9 +691,8 @@ const SECTIONS = [
     questions: [
       {
         id: "logging",
-        pastaNote: "Login audit logs are required to detect TA0001, TA0006, and lateral movement post-incident",
+        pastaNote: "Login logs let you trace what happened during a breach. Without them, you may never know the full extent of a compromise",
         text: "Does your business log or record who logs into systems, from where, and when?",
-        hint: "Login logs let you trace what happened during a breach. Without them, you may never know the full extent of a compromise.",
         options: [
           "Yes — login logs are collected and reviewed regularly",
           "Yes — logs are collected but rarely if ever reviewed",

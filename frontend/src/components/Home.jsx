@@ -465,12 +465,12 @@ export default function Home({ onStartSurvey, onOpenMisconfig, onOpenEconomic, l
         </div>
         {/* ── Footer ── */}
         <p style={{
-          textAlign: "center", color: "#1a2a38", fontSize: 11,
+          textAlign: "center", color: "#4e6e8a", fontSize: 11,
           marginTop: 28, fontFamily: "monospace",
           lineHeight: 1.7,
         }}>
           All responses and data processed locally · No telemetry · No external data transmission<br />
-          Built for SMEs with &lt;50 employees operating under tight security budgets
+          Built for resource-constrained SMEs
         </p>
 
       </div>
