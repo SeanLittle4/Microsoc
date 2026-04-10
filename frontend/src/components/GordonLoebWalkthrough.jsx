@@ -8,7 +8,7 @@ const BORDER2  = "#1e2e3e";
 const GOLD     = "#c8922a";
 const TEXT_PRI = "#e8ddd0";
 const TEXT_SEC = "#8a9eb0";
-const TEXT_DIM = "#3a5568";
+const TEXT_DIM = "#3a5568";9
 const TEXT_MUT = "#3b5b79";
 const CRIT     = "#e05c5c";
 const HIGH_C   = "#e8a020";
@@ -326,7 +326,7 @@ function GLIntro({ model }) {
           <div style={{ flex: 1, minWidth: 180 }}>
             <p style={{ color: TEXT_DIM, fontSize: 13, fontFamily: "Georgia, serif", lineHeight: 1.65, margin: 0 }}>
               Your {summary.total_findings} confirmed findings have been automatically fed into the{" "}
-              <strong style={{ color: GOLD }}>Gordon–Loeb Model</strong>. Breach probability (v) is now computed
+              <strong style={{ color: GOLD }}>Gordon–Loeb Model</strong>. Breach probability (v) is computed
               using <strong style={{ color: TEXT_SEC }}>CVSS v3.1 exploitability attributes</strong> for each
               finding, with a confidence interval derived from severity classification uncertainty.
             </p>

@@ -1104,6 +1104,83 @@ const ThreatReport = ({ threatModel, onLaunchEconomic, onLaunchMisconfig }) => {
 
   return (
     <div style={{ marginTop: 36, paddingTop: 36, borderTop: "1px solid #141e28" }}>
+      {/* ── Scoring methodology intro ── */}
+    <div style={{
+      background: "rgba(200,146,42,0.04)",
+      border: "1px solid rgba(200,146,42,0.15)",
+      borderRadius: 10,
+      padding: "24px 28px",
+      marginBottom: 32,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+        <div style={{
+          width: 7, height: 7, borderRadius: "50%",
+          background: "#c8922a", boxShadow: "0 0 8px #c8922a88",
+        }} />
+        <span style={{
+          color: "#c8922a", fontSize: 11, fontFamily: "monospace",
+          letterSpacing: "0.14em", textTransform: "uppercase",
+        }}>
+          About This Report
+        </span>
+      </div>
+
+      <p style={{
+        color: "#8a9eb0", fontSize: 14, fontFamily: "Georgia, serif",
+        lineHeight: 1.7, margin: "0 0 16px",
+      }}>
+        MicroSOC evaluated your survey responses against a library of{" "}
+        <span style={{ color: "#c8c0b4" }}>27 threat scenarios</span> mapped to the{" "}
+        <span style={{ color: "#c8c0b4" }}>MITRE ATT&CK framework</span> and organized
+        using the <span style={{ color: "#c8c0b4" }}>PASTA threat modeling methodology</span>.
+        Each scenario was tested against your answers; only the findings that match
+        your specific environment and security posture are shown below.
+      </p>
+
+      <p style={{
+        color: "#8a9eb0", fontSize: 14, fontFamily: "Georgia, serif",
+        lineHeight: 1.7, margin: "0 0 16px",
+      }}>
+        The <span style={{ color: "#c8c0b4" }}>Risk Score</span> is calculated using{" "}
+        <span style={{ color: "#c8c0b4" }}>CVSS v3.1 exploitability attributes</span> for
+        each finding. Each finding contributes to the score based on two factors: its{" "}
+        <span style={{ color: "#c8c0b4" }}>severity impact</span> (how damaging a successful
+        attack would be) and its{" "}
+        <span style={{ color: "#c8c0b4" }}>exploitability</span> (how easy it is for an
+        attacker to exploit). The combined score is normalized to a 0–100 scale,
+        where 100 represents the worst realistic case for an SME. Read more on CVSS scoring here: https://www.first.org/cvss/specification-document
+      </p>
+
+      {/* Score band legend */}
+      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
+        {[
+          { range: "70 – 100", label: "Critical Risk",  color: "#e05c5c", desc: "Immediate action required" },
+          { range: "40 – 69",  label: "Elevated Risk",  color: "#e8a020", desc: "Address within 30 days"   },
+          { range: "0 – 39",   label: "Moderate Risk",  color: "#5b8dd4", desc: "Monitor and plan remediation" },
+        ].map(band => (
+          <div key={band.range} style={{
+            display: "flex", alignItems: "center", gap: 10,
+            background: band.color + "10",
+            border: `1px solid ${band.color}30`,
+            borderRadius: 6, padding: "8px 14px", flex: "1 1 180px",
+          }}>
+            <div style={{
+              width: 8, height: 8, borderRadius: "50%",
+              background: band.color, flexShrink: 0,
+            }} />
+            <div>
+              <div style={{ color: band.color, fontSize: 11, fontFamily: "monospace", fontWeight: 700 }}>
+                {band.range} — {band.label}
+              </div>
+              <div style={{ color: "#4a6278", fontSize: 11, fontFamily: "monospace" }}>
+                {band.desc}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
       <div style={{ marginBottom: 28 }}>
         <div style={{ color: TEXT_DIM, fontSize: 11, fontFamily: "monospace", marginBottom: 8, letterSpacing: "0.1em", textTransform: "uppercase" }}>
           Threat Model Results
@@ -1375,6 +1452,57 @@ export default function App({onGoHome}) {
       transform: visible ? "none" : "translateY(8px)",
       transition: "opacity 0.5s, transform 0.5s",
     }}>
+      {/* ── Analyzing overlay ── */}
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+      `}</style>
+
+      {loading && (
+        <div style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(11, 17, 23, 0.85)",
+          backdropFilter: "blur(4px)",
+          zIndex: 9999,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 24,
+        }}>
+          <div style={{
+            width: 64,
+            height: 64,
+            borderRadius: "50%",
+            border: "3px solid #1a2530",
+            borderTop: "3px solid #c8922a",
+            animation: "spin 1s linear infinite",
+          }} />
+          <div style={{ textAlign: "center" }}>
+            <div style={{
+              color: "#c8922a",
+              fontSize: 18,
+              fontFamily: "Georgia, serif",
+              fontWeight: 700,
+              marginBottom: 8,
+            }}>
+              Analyzing your responses
+            </div>
+            <div style={{
+              color: "#4a6278",
+              fontSize: 12,
+              fontFamily: "monospace",
+              letterSpacing: "0.1em",
+            }}>
+              Generating Threat Model
+            </div>
+          </div>
+        </div>
+      )}
+
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
 
         {/* Header */}
