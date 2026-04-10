@@ -288,10 +288,10 @@ function generateReport(rules, flaggedIds, mode) {
     </div>`;
 
   const sl = scoreLabel(total - flaggedIds.size, total);
-  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>MicroSOC — Misconfiguration Report</title>
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><title>MicroSOC — Threat Report</title>
 <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Georgia,serif;background:#fff;color:#1a202c;font-size:14px}.page{max-width:820px;margin:0 auto;padding:48px 40px}.header{background:#0b1117;color:#fff;padding:32px 40px;border-radius:10px;margin-bottom:32px}.header h1{font-size:22px;font-weight:800;color:#c8922a;margin-bottom:4px}.header .sub{color:#94a3b8;font-size:13px}.header .date{color:#4a5568;font-size:11px;margin-top:6px;font-family:monospace}h2{font-size:14px;font-weight:700;color:#0b1117;text-transform:uppercase;letter-spacing:0.07em;margin:28px 0 12px;border-bottom:2px solid #c8922a;padding-bottom:6px}.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}.stat{background:#f7fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px 16px;flex:1;min-width:110px}.stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:#718096;margin-bottom:4px;font-family:monospace}.stat .val{font-size:20px;font-weight:800;font-family:monospace}.footer{margin-top:48px;padding-top:16px;border-top:1px solid #e2e8f0;color:#718096;font-size:10px;text-align:center;font-family:monospace}@media print{.page{padding:20px}}</style>
 </head><body><div class="page">
-<div class="header"><h1>MicroSOC — Misconfiguration Reference Report</h1><div class="sub">Security Configuration Checklist · PASTA + MITRE ATT&amp;CK Framework</div><div class="date">Generated: ${date} · ${total} checks reviewed · Source: CISA, NIST, FBI IC3, MITRE ATT&amp;CK</div></div>
+<div class="header"><h1>MicroSOC — Threat Reference Report</h1><div class="sub">Security Configuration Checklist · PASTA + MITRE ATT&amp;CK Framework</div><div class="date">Generated: ${date} · ${total} checks reviewed · Source: CISA, NIST, FBI IC3, MITRE ATT&amp;CK</div></div>
 
 <h2>Security Posture Summary</h2>
 <div class="stats">
@@ -304,7 +304,7 @@ function generateReport(rules, flaggedIds, mode) {
 ${flagged.length > 0 ? `<h2>Flagged Issues (${flagged.length})</h2>${flagged.map(r => ruleHTML(r, true)).join("")}` : ""}
 ${mode !== "flagged-only" ? `<h2>All ${total} Checks</h2>${rules.map(r => ruleHTML(r, flaggedIds.has(r.id))).join("")}` : ""}
 
-<div class="footer">MicroSOC · PASTA + MITRE ATT&amp;CK · Misconfiguration Module · ${new Date().toISOString().slice(0,10)}</div>
+<div class="footer">MicroSOC · PASTA + MITRE ATT&amp;CK · Threat Module · ${new Date().toISOString().slice(0,10)}</div>
 </div></body></html>`;
 
   const win = window.open("", "_blank");
@@ -410,10 +410,10 @@ export default function MisconfigGuide({ threatModel, onBack }) {
           </div>
 
           <h1 style={{ fontSize: 34, color: TEXT_PRI, margin: "0 0 4px", lineHeight: 1.1, fontWeight: 700, letterSpacing: "-0.5px" }}>
-            Misconfiguration Reference Guide
+            Threat Reference Guide
           </h1>
           <p style={{ color: TEXT_DIM, fontSize: 15, margin: "8px 0 0", lineHeight: 1.7, maxWidth: 620 }}>
-            Every security check MicroSOC monitors — step-by-step remediation and authoritative references from CISA, NIST, and the FBI IC3.
+            Every threat MicroSOC monitors along with step-by-step remediation and authoritative references from CISA, NIST, and the FBI IC3.
             {hasThreatModel && <strong style={{ color: TEXT_SEC }}> {flaggedCount} of {total} checks flagged in your assessment.</strong>}
           </p>
         </div>
