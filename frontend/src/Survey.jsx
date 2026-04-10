@@ -31,7 +31,7 @@ const SECTIONS = [
     icon: "I",
     title: "Business Objectives & Priorities",
     subtitle:
-      "PASTA begins by anchoring the threat model in your business goals, not technology. Attackers conduct reconnaissance to understand exactly what you value before they strike.",
+      "PASTA begins by anchoring the threat model in your business goals, not technology. While not directly tied to a specific threat, attackers can still use this information to mark you as a target and to understand exactly what you value before they strike.",
     questions: [
       {
         id: "industry",
