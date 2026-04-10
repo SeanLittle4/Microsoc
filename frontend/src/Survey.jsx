@@ -967,11 +967,6 @@ const FindingCard = ({ finding }) => {
               <span style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace" }}>
                 PASTA: <span style={{ color: "#4a6278" }}>{finding.pasta_stage}</span>
               </span>
-              {finding.likelihood && (
-                <span style={{ color: TEXT_MUT, fontSize: 11, fontFamily: "monospace" }}>
-                  Likelihood: <span style={{ color: "#4a6278" }}>{finding.likelihood}</span>
-                </span>
-              )}
             </div>
             {finding.references && finding.references.length > 0 && (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

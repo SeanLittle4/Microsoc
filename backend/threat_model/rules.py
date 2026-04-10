@@ -847,7 +847,7 @@ RISK_RULES = [
         "cvss_ui": "required",
         "business_impact": (
             "Domain-based Message Authentication, Reporting, and Conformance (DMARC) is an essential email security "
-            "protocol that prevents attackers from spoofing a domain to send phishing or malicious emails. "
+            "protocol that prevents attackers from spoofing a domain to send phishing or malicious emails."
             "Without DMARC, attackers can send emails that appear to come from your "
             "exact domain — your customers, partners, and employees will see your "
             "real email address as the sender. This enables highly convincing invoice "
