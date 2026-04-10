@@ -13,13 +13,11 @@ def generate_threat_model(responses: dict) -> dict:
                 "attack_tactic":    rule["attack_tactic"],
                 "attack_technique": rule["attack_technique"],
                 "severity":         rule["severity"],
-                "business_impact":  rule["business_impact"],
                 "likelihood":       rule["likelihood"],
+                "description":      rule.get("description", ""),   # ← add this line
+                "business_impact":  rule["business_impact"],
                 "recommendation":   rule["recommendation"],
                 "references":       rule.get("references", []),
-                # CVSS v3.1 exploitability attributes — used by the frontend
-                # to compute a structured breach probability (v) in the
-                # Gordon-Loeb economic model, replacing the flat likelihood weight.
                 "cvss_av":          rule.get("cvss_av"),
                 "cvss_ac":          rule.get("cvss_ac"),
                 "cvss_pr":          rule.get("cvss_pr"),

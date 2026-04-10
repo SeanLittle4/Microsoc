@@ -14,15 +14,35 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "required",
+        "description": (
+            "Business Email Compromise (BEC) is a scam where an attacker sends a carefully "
+            "crafted email impersonating someone the victim trusts, typically an executive, "
+            "a vendor, or an IT provider, and uses that trust to request an urgent wire "
+            "transfer or payment to a bank account the attacker controls. The emails are "
+            "convincing because the attacker has often researched the business in advance: "
+            "they know the names of executives, vendors, and ongoing projects. The request "
+            "usually comes with a reason the normal verification steps should be skipped; "
+            "an emergency, a deadline, or a claimed technical issue. "
+            "Learn more: https://www.ic3.gov/Media/Y2023/PSA230609"
+        ),
         "business_impact": (
-            "Attacker impersonates an executive or vendor over email and tricks "
-            "an employee into wiring funds to a fraudulent account. Average SME "
-            "loss exceeds $50,000 per incident with minimal recovery."
+            "BEC is the costliest cybercrime category tracked by the FBI. The FBI Internet "
+            "Crime Complaint Center (IC3) 2023 report recorded 21,489 BEC complaints with "
+            "over $2.9 billion in adjusted losses; an average loss of approximately $137,000 "
+            "per incident. For small businesses, losses frequently exceed $50,000 and recovery "
+            "is rare: wire transfers are typically processed within hours and routed through "
+            "overseas accounts before the fraud is detected. Even when law enforcement is "
+            "notified immediately, fewer than 25% of wire fraud losses are recovered. In "
+            "addition to the direct financial loss, the business may face legal liability if "
+            "client funds were involved and reputational harm from disclosed fraud. "
+            "Real-world example: In 2020, a small US real estate firm lost $503,000 in a "
+            "single BEC transaction after an attacker impersonated a title company by email. "
+            "Source: https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf"
         ),
         "recommendation": (
             "Require out-of-band verification (phone call to a known number) for "
             "ALL payment changes or wire transfers, regardless of how urgent the "
-            "email appears. No exceptions."
+            "email appears. No exceptions. Enforce MFA and ensure authentications are logged."
         ),
         "references": ["https://www.ic3.gov/Media/Y2023/PSA230609"],
         "condition": lambda r: (
@@ -33,6 +53,14 @@ RISK_RULES = [
                 "Not confident — we haven't had formal phishing training",
                 "We've already had an incident involving a phishing email",
                 "Possibly — employees might comply without formal verification",
+            ] and r.get("mfa") in [
+                "It's available but optional — employees decide whether to use it",
+                "No — we rely on passwords only",
+                "I'm not sure",
+            ] and r.get("credential_reuse") in [
+                "Probably — we haven't enforced a password policy",
+                "Yes — password reuse is common here",
+                "We have a password policy but can't verify compliance",
             ]
         ),
     },
@@ -50,15 +78,35 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "required",
+        "description": (
+            "Ransomware is malicious software that locks every file on your computers and "
+            "servers and demands a payment in exchange for the key to unlock them. "
+			"It most commonly arrives through a phishing email, an "
+            "unsecured remote desktop connection, or an unpatched software vulnerability. "
+            "Once it executes, it can spread across an entire network in minutes, encrypting "
+            "shared drives, servers, and cloud-synced folders simultaneously. Cloud sync "
+            "services like OneDrive and Google Drive are NOT a defense. Ransomware encrypts "
+            "files locally and the changes sync to the cloud before anyone realizes what has "
+            "happened. Without a tested, offline backup, there is no technical recovery option. "
+            "Learn more: https://www.cisa.gov/stopransomware"
+        ),
         "business_impact": (
-            "Ransomware encrypts all business files and systems. Without tested "
-            "offline backups, the only options are paying the ransom or permanent "
-            "data loss. For businesses with low downtime tolerance, this is existential."
+            "According to Sophos's State of Ransomware 2024 report, the average total recovery "
+            "cost from a ransomware attack (including downtime, IT remediation, legal fees, "
+            "and lost business) reached $2.73 million, up from $1.82 million the prior year. "
+            "The average ransom payment alone was $2 million. For small businesses, the Verizon "
+            "2024 Data Breach Investigations Report found ransomware was present in 23% of all "
+            "breaches. CISA estimates that 60% of small businesses that suffer a ransomware "
+            "attack close within six months. For a business with no offline backup, the choice "
+            "is binary: pay a criminal with no guarantee of recovery, or accept permanent loss "
+            "of all business data, customer records, financial history, contracts, and "
+            "operational systems. Either outcome is typically existential for a small business. "
+            "Source: https://www.sophos.com/en-us/content/state-of-ransomware"
         ),
         "recommendation": (
             "Implement the 3-2-1 backup rule: 3 copies, 2 different media types, "
             "1 stored offline or air-gapped. Test restoration monthly. Cloud sync "
-            "alone (OneDrive, Google Drive) is NOT a backup — ransomware can encrypt "
+            "alone (OneDrive, Google Drive) is NOT a backup; ransomware can encrypt "
             "synced files too."
         ),
         "references": ["https://www.cisa.gov/stopransomware"],
@@ -88,13 +136,34 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "Credential stuffing is an automated attack where criminals take large lists of "
+            "usernames and passwords stolen from other websites (there are billions of these "
+            "freely available on the dark web) and automatically test them against your "
+            "business accounts. If any of your employees reuse the same password across "
+            "multiple sites, their credentials are likely already in one of these lists. "
+            "The attack runs 24 hours a day, requires no human involvement, and succeeds "
+            "silently when a match is found. The attacker gains full access to the account "
+            "without any alert or warning. Without multi-factor authentication (MFA), a "
+            "single reused password is all that stands between an attacker and complete "
+            "access to your email, files, and business systems. "
+            "Check if your employees' emails appear in known breaches: https://haveibeenpwned.com"
+        ),
         "business_impact": (
-            "Attackers use leaked password databases to automatically try credentials "
-            "against your email and cloud accounts. Without MFA, a single reused password "
-            "from any data breach gives full account access."
+            "Microsoft reports that MFA blocks over 99.9% of automated credential attacks. "
+            "Without it, a successful account takeover gives an attacker full access to "
+            "everything in that account: every email sent and received, every file stored, "
+            "every contact, and potentially administrative access to other systems if the "
+            "compromised account has elevated privileges. The IBM Cost of Data Breach 2024 "
+            "report found that stolen or compromised credentials are the most common initial "
+            "attack vector, accounting for 16% of breaches at an average cost of $4.81 million. "
+            "For SMEs, a compromised email account is the typical entry point for business "
+            "email compromise fraud, ransomware delivery, and customer data theft — often "
+            "without the business being aware for weeks or months. "
+            "Source: https://www.microsoft.com/en-us/security/blog/2019/08/20/one-simple-action-you-can-take-to-prevent-99-9-percent-of-account-attacks/"
         ),
         "recommendation": (
-            "Enable MFA on all accounts immediately — prioritize email, admin accounts, "
+            "Enable MFA on all accounts immediately; prioritize email, admin accounts, "
             "and financial systems. Use an authenticator app (not SMS where possible). "
             "Deploy a password manager so employees stop reusing passwords."
         ),
@@ -125,10 +194,31 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "low",
         "cvss_ui": "none",
+        "description": (
+            "When an employee or contractor leaves your organization, their login accounts "
+            "typically remain active unless someone manually disables them. These 'stale' "
+            "accounts represent open doors into your systems. A former employee who left on "
+            "bad terms can log in at any time. More commonly, an attacker who purchased "
+            "stolen credentials, or who compromised the former employee's personal email "
+            "to recover their password. can use the active account to gain access. Because "
+            "the login uses a real, valid username and password, there is no alert or warning. "
+            "The access looks completely normal to any security system that is not specifically "
+            "monitoring for accounts belonging to former staff. "
+            "Learn more: https://attack.mitre.org/techniques/T1078/"
+        ),
         "business_impact": (
-            "Former employees or contractors retain active credentials after leaving. "
-            "A disgruntled ex-employee or an attacker who purchases stolen credentials "
-            "can silently access systems for months without detection."
+            "The Verizon 2024 Data Breach Investigations Report found that the use of stolen "
+            "or misused credentials was involved in 24% of all data breaches. Stale accounts "
+            "are a primary enabler: they give attackers authenticated, trusted access that "
+            "bypasses most security controls. A former employee with retained access to "
+            "customer databases, financial systems, or email can exfiltrate data over an "
+            "extended period without triggering alerts. The Ponemon Institute's 2022 Cost "
+            "of Insider Threats report found that the average cost of a credential-based "
+            "insider incident was $679,621, with incidents involving former employees "
+            "averaging higher due to longer dwell times before detection. For small "
+            "businesses, the most common outcome is theft of customer lists, pricing data, "
+            "or intellectual property by a departing employee or their new employer. "
+            "Source: https://www.verizon.com/business/resources/reports/dbir/"
         ),
         "recommendation": (
             "Create an offboarding checklist that disables ALL accounts on the last day "
@@ -156,14 +246,34 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "low",
         "cvss_ui": "none",
+        "description": (
+            "After gaining access to an email account (through phishing, credential stuffing, "
+            "or any other method) attackers frequently plant a hidden rule that automatically "
+            "forwards a copy of every email the account sends and receives to an address they "
+            "control. The rule is invisible to the account owner: their email appears to work "
+            "normally, there is no notification, and the forwarded copies leave no trace in "
+            "the sent folder. The attacker then monitors the account passively for weeks or "
+            "months, collecting business intelligence, intercepting payment information, and "
+            "waiting for the right opportunity to act. This technique is used in the majority "
+            "of business email compromise cases to gather context before initiating fraud. "
+            "Learn more: https://attack.mitre.org/techniques/T1114/003/"
+        ),
         "business_impact": (
-            "After compromising an email account, attackers plant hidden forwarding rules "
-            "that silently copy every inbound and outbound email to an external address. "
-            "The account owner sees nothing abnormal. Sensitive data leaks continuously."
+            "Hidden email forwarding is particularly damaging because it operates silently "
+            "over an extended period. Every email sent to and from the compromised account "
+            "is being read by an attacker in real time. The FBI IC3 2023 report identified "
+			"email account compromise as a key enabler "
+            "of BEC fraud, with losses averaging $137,000 per incident. In many cases the "
+            "forwarding rule is discovered only after a fraudulent transaction has already "
+            "occurred, meaning the business has been under active surveillance for weeks "
+            "without knowing it. Beyond financial fraud, continuous email access also "
+            "constitutes a data breach under most state privacy laws, potentially triggering "
+            "customer notification obligations and regulatory fines. "
+            "Source: https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf"
         ),
         "recommendation": (
             "Audit all mailbox forwarding rules now. In Microsoft 365: Exchange Admin "
-            "Center → Mail Flow → Rules. Disable automatic external forwarding at the "
+            "Center → Mail Flow → Rules. In Google Workspace: Admin Console → Reporting → Audit and Investigation → Email log search. Disable automatic external forwarding at the "
             "tenant level. Set an alert for any new forwarding rules being created."
         ),
         "references": ["https://attack.mitre.org/techniques/T1114/003/"],
@@ -187,10 +297,31 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "low",
         "cvss_ui": "none",
+        "description": (
+            "Many small businesses grant their IT providers, accountants, web developers, "
+            "or other vendors ongoing access to their systems for maintenance and support. "
+            "When vendors share a single login with your staff or use a generic account, "
+            "you lose the ability to track who did what and when. More critically, if the "
+            "vendor itself is compromised, which is increasingly common, the attacker "
+            "inherits all of the access your vendor had across every client they serve. "
+            "This is not a theoretical risk: some of the largest breaches in history have "
+            "started at small vendors with trusted access to larger organizations. "
+            "Learn more: https://attack.mitre.org/techniques/T1199/"
+        ),
         "business_impact": (
-            "Vendors with shared or uncontrolled access become a secondary attack surface. "
-            "An attacker who compromises your IT provider or accountant gains direct access "
-            "to your systems under trusted credentials."
+            "The supply chain attack vector is well-documented at the enterprise level, but "
+            "it applies equally to SMEs. The 2014 Target breach, which resulted in $291 million "
+            "in total losses including settlements, originated through an HVAC vendor with "
+            "trusted network access. Verizon's DBIR has consistently found that third-party "
+            "involvement appears in roughly 15% of breaches annually. For SMEs that share "
+            "credentials with IT providers or use a single vendor account for multiple staff, "
+            "the exposure is direct: an attacker who compromises your IT provider gains "
+            "authenticated access to every system the provider manages. This can result in "
+            "ransomware deployment, data theft, or persistent access that is difficult to "
+            "detect because the access originates from a trusted source. Legal and contractual "
+            "liability for vendor-enabled breaches remains with the business that was breached, "
+            "not the vendor. "
+            "Source: https://www.verizon.com/business/resources/reports/dbir/"
         ),
         "recommendation": (
             "Create dedicated, named accounts for each vendor with the minimum access "
@@ -218,10 +349,32 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "If no one is monitoring who logs into your systems and from where, an attacker "
+            "who gains access can operate freely for weeks or months without being detected. "
+            "Login logging and anomaly detection are the most basic form of security "
+            "visibility; they record when accounts are accessed, from which location, "
+            "and at what time. Without them, you have no way to know that an account "
+            "has been compromised, that someone is accessing your files from another country, "
+            "or that an attacker has been inside your systems. Most cloud platforms like "
+            "Microsoft 365 and Google Workspace include basic login logging at no additional "
+            "cost. It simply needs to be reviewed. "
+            "Learn more: https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-137a"
+        ),
         "business_impact": (
-            "Without login logging or anomaly alerts, attackers operate undetected for "
-            "an average of 197 days. The longer they're in, the more data they steal and "
-            "the more damage they can cause before discovery."
+            "The IBM Cost of a Data Breach 2024 report found that the average time to "
+            "identify and contain a breach was 258 days. Organizations with security "
+            "monitoring in place identified breaches 108 days faster on average, reducing "
+            "the average cost by $1.02 million. For SMEs without any logging or alerting, "
+            "a breach may go undetected until a customer reports fraud, a ransomware "
+            "note appears on screen, or a regulatory body notifies the business that "
+            "its customer data was found on the dark web. By that point, the attacker "
+            "has had extended access to all business data, email, and financial systems. "
+            "The longer an attacker remains undetected, the greater the volume of data "
+            "exfiltrated and the higher the total cost of the incident. Detection gaps "
+            "also complicate cyber insurance claims, as insurers increasingly require "
+            "evidence of monitoring as a condition of coverage. "
+            "Source: https://www.ibm.com/reports/data-breach"
         ),
         "recommendation": (
             "Enable login audit logging in your identity platform (Microsoft Entra or "
@@ -253,12 +406,33 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "Almost every network-connected device (printers, security cameras, smart TVs, "
+            "routers, door access systems) ships from the factory with a default username "
+            "and password, typically something like 'admin/admin' or 'admin/password.' These "
+            "defaults are publicly listed on manufacturer websites and in databases that "
+            "attackers use to automate compromise. If the default password is never changed, "
+            "anyone on your network, or in some cases anyone on the internet, can log "
+            "into the device. This is not a sophisticated attack. Automated tools scan for "
+            "devices with default credentials continuously. CISA has documented multiple "
+            "cases where a printer with unchanged default credentials was used as the entry "
+            "point into an entire corporate network. "
+            "CISA advisory: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-278a"
+        ),
         "business_impact": (
-            "Printers, cameras, smart TVs, and other internet-connected devices "
-            "shipped with default passwords are trivially compromised. Once inside, "
-            "attackers use the device as a foothold to move laterally across the network. "
-            "CISA has documented cases where printers with default credentials and loaded "
-            "domain accounts allowed attackers to compromise entire Active Directory environments."
+            "CISA has published specific case studies showing that printers with default "
+            "credentials and domain accounts loaded were used to compromise entire Active "
+            "Directory environments, giving attackers full control of every computer in "
+            "the organization. The 2016 Mirai botnet, which recruited IoT devices with "
+            "default credentials into a massive attack network, caused an estimated "
+            "$110 million in damages and disrupted internet access across the US East Coast. "
+            "For small businesses, a compromised IoT device on the same network as business "
+            "computers provides an attacker with a persistent foothold to launch further "
+            "attacks, deploy ransomware, or exfiltrate data. The device itself often shows "
+            "no visible signs of compromise. IoT devices are also typically not covered by "
+            "endpoint security software, making them invisible to most security tools. "
+            "Sources: https://www.cisa.gov/news-events/news/2023/09/28/cisa-shares-lessons-learned-printer-compromise | "
+            "https://www.cisa.gov/news-events/news/2024/05/14/cisa-shares-lessons-learned-printer-compromise-part-2"
         ),
         "recommendation": (
             "Immediately change default passwords on ALL network-connected devices. "
@@ -290,11 +464,31 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "Physical access to a computer or server bypasses virtually every digital "
+            "security control in place. An attacker who can walk up to an unlocked, "
+            "unattended workstation can plug in a USB drive loaded with malware, copy "
+            "files, capture saved passwords, or install a persistent backdoor, all in "
+            "under two minutes. In open office environments, this risk extends to anyone "
+            "who can enter the space: delivery drivers, contractors, cleaning staff, "
+            "visitors, and former employees who still have building access. Screens left "
+            "unlocked when an employee steps away are among the most common vectors for "
+            "both opportunistic theft and targeted data collection. "
+            "Learn more: https://www.cisa.gov/topics/physical-security"
+        ),
         "business_impact": (
-            "An open office environment allows any visitor — delivery drivers, contractors, "
-            "former employees — to physically access computers, plug in a USB device, "
-            "photograph screens, or steal hardware. Physical access bypasses every "
-            "digital security control you have in place."
+            "Physical security incidents are often underreported, but the IBM Cost of a "
+            "Data Breach 2024 report found that physical security compromise was a "
+            "contributing factor in a meaningful percentage of breaches. A stolen laptop "
+            "without full disk encryption gives an attacker complete access to every file, "
+            "credential, and email on the device, immediately triggering breach notification "
+            "obligations in most US states for any customer PII stored on the device. "
+            "The average notification cost alone ranges from $125 to $175 per affected "
+            "individual. Beyond laptops, an attacker who plugs a malicious USB device into "
+            "a network-connected workstation can establish persistent remote access that "
+            "survives password changes and persists undetected for months. Physical access "
+            "is the highest-impact, lowest-technical-skill attack vector available. "
+            "Source: https://www.ibm.com/reports/data-breach"
         ),
         "recommendation": (
             "Lock server rooms and IT equipment at all times. Require employees to "
@@ -302,7 +496,6 @@ RISK_RULES = [
             "Log visitor entry and exit. Consider cable locks for laptops in shared spaces."
         ),
         "references": [
-            "https://www.cisa.gov/news-events/news/2023/10/19/cisa-shares-lessons-learned-physical-security-breach",
             "https://www.cisa.gov/topics/physical-security/insider-threat-mitigation",
         ],
         "condition": lambda r: r.get("physical_security") in [
@@ -323,11 +516,34 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "required",
+        "description": (
+            "An administrator account has elevated permissions: the ability to install "
+            "software, create and delete accounts, access all files, and change system "
+            "settings across the entire environment. When the person who manages IT uses "
+            "their admin account for everyday tasks like reading email and browsing the web, "
+            "they are constantly exposed at the highest possible privilege level. If a "
+            "phishing email tricks them into clicking a malicious link, or a compromised "
+            "website silently installs malware, the attacker immediately has full "
+            "administrative control over every system, not just the account that was "
+            "compromised. CISA and NSA have jointly identified this as one of the top ten "
+            "most common misconfigurations found during network assessments. "
+            "CISA advisory: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-278a"
+        ),
         "business_impact": (
-            "When administrators use their privileged account for everyday tasks like "
-            "browsing and email, a single phishing click can give attackers immediate "
-            "admin-level access to the entire environment. CISA identifies this as one "
-            "of the top ten systemic misconfigurations found across assessed networks."
+            "Using an admin account for daily work dramatically amplifies the impact of any "
+            "successful attack. A phishing click that would normally compromise one employee's "
+            "email account instead gives an attacker immediate, full control of every computer, "
+            "server, and account in the environment. CISA's advisory AA23-278A, based on "
+            "assessments of over 1,000 organizations, identifies improper privilege separation "
+            "as a top initial access enabler for ransomware operators specifically because "
+            "it eliminates the need for privilege escalation: the attacker already has "
+            "admin rights from the moment of compromise. The remediation cost of a full "
+            "domain compromise, where the attacker has admin control, is significantly "
+            "higher than a standard account compromise, often requiring complete system "
+            "rebuilds rather than targeted remediation. Average enterprise remediation "
+            "costs for full domain compromise exceed $500,000. For an SME, the equivalent "
+            "is rebuilding every computer from scratch. "
+            "Source: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-278a"
         ),
         "recommendation": (
             "Admins must have two separate accounts: a standard account for daily work "
@@ -358,11 +574,33 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "When customers, clients, or visitors connect to the same Wi-Fi network as "
+            "your business computers and servers, they are on the same internal network "
+            "as your most sensitive systems. A visitor's device that is already infected "
+            "with malware, without the visitor knowing, can silently scan your network "
+            "and attack business computers while sitting in your waiting room. This also "
+            "applies to personal phones and laptops used by your own employees if they "
+            "are on the same network. Network segmentation (creating a separate guest "
+            "Wi-Fi that cannot communicate with business systems) is a standard feature "
+            "on virtually every modern router and costs nothing to configure. "
+            "Learn more: https://www.cisa.gov/news-events/news/understanding-firewalls-home-and-small-office-use"
+        ),
         "business_impact": (
-            "When customers or visitors share the same Wi-Fi network as business devices, "
-            "a compromised or malicious visitor device can scan and attack internal systems "
-            "directly. This completely negates firewall protections designed to block "
-            "external attackers, since the threat is already inside the network perimeter."
+            "An unsegmented guest Wi-Fi is the equivalent of leaving your front door "
+            "unlocked and inviting strangers to sit next to your filing cabinets. Any "
+            "device on your network can attempt to connect to every other device on the "
+            "same network. Retail businesses, medical practices, law firms, and any "
+            "business with a public waiting area face the highest risk. In a typical "
+            "attack scenario, a compromised device on the guest Wi-Fi uses automated "
+            "tools to identify business computers, printers, and servers on the same "
+            "segment within minutes. This can provide a direct path to deploying "
+            "ransomware or exfiltrating data that bypasses internet-facing security "
+            "controls entirely, since the attack originates from inside the network "
+            "perimeter. CISA identifies network segmentation as a foundational control "
+            "specifically because it contains the blast radius of any compromise to a "
+            "single network segment. "
+            "Source: https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-137a"
         ),
         "recommendation": (
             "Create a separate, isolated guest Wi-Fi network with no access to business "
@@ -397,12 +635,33 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "Cyber insurance is a policy that covers the financial costs of a data breach "
+            "or cyberattack, including emergency IT response, customer notification, legal "
+            "defense, regulatory fines, business interruption losses, and in some cases "
+            "ransom payments. Without it, every one of those costs falls directly on the "
+            "business. Despite the growing threat environment, only 28% of small business "
+            "owners in the US report having cyber insurance. Premiums for basic small "
+            "business coverage typically range from $500 to $3,000 per year, a fraction "
+            "of what a single incident can cost. Cyber insurance also often provides access "
+            "to breach response resources and legal counsel, which are critical in the "
+            "first 72 hours after an incident. "
+            "FTC guidance: https://www.ftc.gov/business-guidance/small-businesses/cybersecurity/cyber-insurance"
+        ),
         "business_impact": (
-            "Without cyber insurance, the full cost of a breach — legal fees, customer "
-            "notification, regulatory fines, system restoration, and lost revenue — falls "
-            "entirely on the business. For SMEs with low financial resilience, a single "
-            "incident can be fatal. Only 28% of small business owners in the US report "
-            "having cyber insurance."
+            "The IBM Cost of a Data Breach 2024 report found the average total cost of a "
+            "data breach for small and midsize businesses was $3.31 million. For a business "
+            "with no cyber insurance, this cost is absorbed entirely out of pocket. Even "
+            "a relatively minor incident (i.e. a single compromised email account requiring "
+            "forensic investigation and customer notification) can cost $50,000 to $150,000 "
+            "in professional response fees alone. Ransomware events with full system recovery "
+            "routinely cost $200,000 to $500,000 for small businesses when IT remediation, "
+            "downtime, and data recovery are factored in. The FTC reports that 60% of small "
+            "businesses that suffer a major cyber incident fail within six months, with "
+            "uninsured financial loss being a primary contributor. Cyber insurance does not "
+            "replace good security practices but significantly reduces the existential "
+            "financial exposure of a breach. "
+            "Source: https://www.ibm.com/reports/data-breach"
         ),
         "recommendation": (
             "Obtain a cyber liability insurance policy. At minimum, look for coverage "
@@ -438,12 +697,31 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "If your business collects customer information (names, email addresses, "
+            "phone numbers, payment details, health information, or Social Security numbers) "
+            "you are legally required under most US state laws and federal regulations "
+            "to notify affected customers and, in many cases, government agencies within a "
+            "specific timeframe after a data breach. These obligations exist regardless of "
+            "whether you think the data was actually accessed. The notification window can "
+            "be as short as 72 hours under some regulations. Failing to notify on time "
+            "compounds the original breach with separate regulatory penalties. Every US "
+            "state now has a data breach notification law. "
+            "State notification laws: https://www.ncsl.org/technology-and-communication/security-breach-notification-laws"
+        ),
         "business_impact": (
-            "Businesses that collect customer PII are legally required to notify affected "
-            "individuals and regulators within strict timeframes after a breach — as short "
-            "as 72 hours under GDPR or 30 days under many US state laws. Failure to notify "
-            "compounds the original breach with regulatory fines, class action exposure, "
-            "and reputational damage that often exceeds the direct cost of the incident."
+            "The legal and financial consequences of a notification failure can exceed the "
+            "cost of the original breach. Under GDPR, fines for failure to notify can reach "
+            "4% of annual global revenue or €20 million, whichever is higher. US state law "
+            "penalties vary but typically range from $100 to $750 per affected individual "
+            "per violation — which can reach millions of dollars for businesses with large "
+            "customer databases. Beyond regulatory fines, failure to notify exposes the "
+            "business to class action lawsuits from affected customers. The average cost "
+            "of a US data breach notification is approximately $125 to $175 per affected "
+            "record, including legal fees, communication costs, and credit monitoring "
+            "services. For a business with 5,000 customer records, that is $625,000 to "
+            "$875,000 in notification costs alone. "
+            "Source: https://www.ibm.com/reports/data-breach"
         ),
         "recommendation": (
             "Document a breach notification procedure today — before an incident occurs. "
@@ -453,7 +731,7 @@ RISK_RULES = [
             "law at ncsl.org/technology-and-communication/security-breach-notification-laws."
         ),
         "references": [
-            "https://csrc.nist.gov/Topics/Security-and-Privacy/risk-management/threats/ransomware",
+            "https://www.ncsl.org/technology-and-communication/security-breach-notification-laws",
         ],
         "condition": lambda r: (
             r.get("customer_pii") in [
@@ -479,13 +757,33 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "Full disk encryption scrambles all data on a device so that it is unreadable "
+            "without the correct password. Without it, anyone who physically obtains a "
+            "laptop or hard drive can read every file on it, even without knowing the "
+            "Windows or Mac login password. An attacker simply boots the device from a "
+            "USB drive, bypasses the login screen entirely, and has direct access to the "
+            "raw disk. This is not a sophisticated technique; free tools to do this are "
+            "widely available. Both Windows (BitLocker) and macOS (FileVault) include "
+            "full disk encryption built in, at no additional cost. It simply needs to "
+            "be enabled. "
+            "CISA guidance: https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-137a"
+        ),
         "business_impact": (
-            "A stolen or lost laptop without full disk encryption gives an attacker "
-            "complete access to every file, email, saved password, and credential on "
-            "that device — no password required. They simply boot from a USB drive or "
-            "remove the disk. For businesses handling customer PII or financial data, "
-            "this triggers mandatory breach notification regardless of whether the "
-            "data was actually accessed."
+            "The IBM Cost of a Data Breach 2024 report found that physical security "
+            "incidents involving lost or stolen devices had an average total cost of "
+            "$3.1 million. Beyond the replacement cost of the hardware, the primary "
+            "financial exposure is the data stored on the device. For any business "
+            "that stores customer PII, a stolen unencrypted laptop triggers mandatory "
+            "breach notification in every US state, with notification costs averaging "
+            "$125 to $175 per affected customer record. A laptop containing records "
+            "for even 1,000 customers generates $125,000 to $175,000 in notification "
+            "and response costs. Full disk encryption completely eliminates this risk: "
+            "an encrypted device that is stolen is legally treated as a non-breach "
+            "event in most jurisdictions because the data is unreadable. Enabling "
+            "BitLocker or FileVault takes under five minutes per device and prevents "
+            "what would otherwise be a mandatory and costly disclosure. "
+            "Source: https://www.ibm.com/reports/data-breach"
         ),
         "recommendation": (
             "Enable BitLocker on all Windows devices and FileVault on all Macs. "
@@ -516,13 +814,35 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "required",
+        "description": (
+            "Modern ransomware attacks do not simply encrypt your files and wait for payment. "
+            "Before encrypting anything, attackers first quietly copy your most sensitive "
+            "data (customer records, financial files, contracts, employee data) to their "
+            "own servers. They then encrypt your systems and present two threats: pay to "
+            "unlock your files, and pay to prevent the stolen data from being published "
+            "publicly on criminal leak sites. This 'double extortion' tactic eliminates "
+            "the effectiveness of backups as a complete defense, because even if you "
+            "restore your systems from backup, the attacker still holds your data and "
+            "can threaten to release it. This has become the dominant ransomware model "
+            "since 2020. NIST IR 8374 specifically addresses this evolved threat profile. "
+            "NIST IR 8374: https://csrc.nist.gov/pubs/ir/8374/final"
+        ),
         "business_impact": (
-            "Modern ransomware groups no longer just encrypt files — they first steal "
-            "copies of sensitive data, then threaten to publish it publicly if the ransom "
-            "is not paid. This double extortion eliminates the fallback of restoring from "
-            "backups, since the attacker can still cause harm by leaking customer data, "
-            "financial records, or business secrets. NIST IR 8374 identifies this as the "
-            "primary evolution of ransomware risk requiring a data-centric response."
+            "Double extortion ransomware attacks have resulted in some of the largest SME "
+            "losses in recent years. The Sophos State of Ransomware 2024 report found "
+            "that 32% of ransomware victims whose data was also stolen paid the ransom "
+            "even though they had backups, because the threat of data publication created "
+            "separate liability exposure. Average total recovery costs for double extortion "
+            "attacks were $3.58 million, compared to $2.73 million for encryption-only "
+            "attacks. For a business holding customer financial data, health records, "
+            "or confidential contracts, the threat of public data release triggers "
+            "mandatory breach notification, regulatory fines, and potential class action "
+            "liability — all independent of whether the ransom is paid. The 2021 Kaseya "
+            "VSA attack, which affected over 1,500 SMEs through a single managed IT "
+            "provider, demonstrated that small businesses are primary targets for this "
+            "attack class. "
+            "Source: https://www.sophos.com/en-us/content/state-of-ransomware | "
+            "Kaseya case: https://www.cisa.gov/news-events/cybersecurity-advisories/aa21-200a"
         ),
         "recommendation": (
             "Backups alone are no longer sufficient protection against ransomware. "
@@ -563,13 +883,35 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "required",
+        "description": (
+            "In a tech support impersonation attack, a criminal calls an employee pretending "
+            "to be Microsoft support, the company's IT provider, or another trusted technical "
+            "contact. The caller claims there is a problem (a virus detected, a security "
+            "alert, an account issue) and asks the employee to install a remote access tool "
+            "or provide their login credentials so the 'technician' can fix it. Once the "
+            "employee complies, the attacker has full, real-time access to the employee's "
+            "computer and everything on it. These calls are designed to create urgency and "
+            "bypass skepticism. Businesses without a clearly communicated IT contact policy "
+            "are especially vulnerable because employees have no reliable way to verify "
+            "whether a caller is legitimate. "
+            "FBI IC3 report: https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf"
+        ),
         "business_impact": (
-            "Attackers call employees posing as Microsoft support, IT vendors, or the "
-            "business owner's IT provider and convince them to install remote access tools "
-            "or reveal credentials. The FBI IC3 2023 report recorded tech support scams "
-            "as the third-costliest cybercrime category with over $924 million in reported "
-            "losses. SMEs with informal IT arrangements are disproportionately targeted "
-            "because employees cannot verify who their real IT contact is."
+            "The FBI IC3 2023 report ranked tech support fraud as the third-costliest "
+            "cybercrime category, with reported losses exceeding $924 million — and the "
+            "FBI notes that these figures significantly undercount actual losses due to "
+            "underreporting. The average loss per victim was $27,994, but corporate victims "
+            "report substantially higher losses when business systems are compromised. "
+            "Once an attacker has remote access to a business computer, they typically "
+            "move immediately to: access saved passwords and banking credentials, "
+            "transfer funds from any open financial accounts, install persistent malware "
+            "for ongoing access, and pivot to other computers on the same network. "
+            "The total cost of a successful tech support scam that results in full "
+            "network access can easily reach $100,000 to $500,000 when financial fraud, "
+            "IT remediation, and incident response are combined. SMEs with informal IT "
+            "arrangements are disproportionately targeted precisely because employees "
+            "cannot verify who their real IT contact is. "
+            "Source: https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf"
         ),
         "recommendation": (
             "Establish a written IT contact protocol: employees should have one verified "
@@ -604,13 +946,32 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "Software that has reached its 'end of life' no longer receives security "
+            "updates from the manufacturer. This means that every new vulnerability "
+            "discovered in that software after the end-of-life date will never be patched "
+            "— it becomes a permanent, public entry point. Windows 10, for example, "
+            "reached end of life in October 2025. Attackers maintain lists of known "
+            "vulnerabilities in end-of-life software and use automated tools to scan "
+            "the internet for systems running those versions. No user action is required "
+            "for many of these exploits, the attacker simply sends a specially crafted "
+            "request to the vulnerable software and gains access. "
+            "Check software end-of-life dates: https://endoflife.date"
+        ),
         "business_impact": (
-            "End-of-life software no longer receives security patches, meaning every "
-            "newly discovered vulnerability is permanently exploitable. NIST recommends "
-            "maintaining hardware and software inventories as a foundational ransomware "
-            "prevention step because unpatched systems are among the most common "
-            "ransomware entry points. Attackers actively scan the internet for known "
-            "vulnerable software versions."
+            "The 2017 WannaCry ransomware attack exploited a known vulnerability in "
+            "unpatched Windows systems and caused an estimated $4 billion to $8 billion "
+            "in damages globally, affecting over 200,000 organizations across 150 countries "
+            ", including the UK's National Health Service, which had to cancel 19,000 "
+            "medical appointments. The vulnerability WannaCry exploited had been patched "
+            "by Microsoft two months earlier; organizations running unpatched or end-of-life "
+            "Windows had no protection. CISA's guidance on ransomware prevention specifically "
+            "identifies unpatched and end-of-life software as among the highest-risk "
+            "conditions for ransomware infection. For small businesses, a single successful "
+            "exploit against an unpatched system can result in full network compromise, "
+            "ransomware deployment, and recovery costs averaging $2.73 million according "
+            "to Sophos's 2024 report. "
+            "WannaCry case study: https://www.cisa.gov/news-events/cybersecurity-advisories/aa17-132a"
         ),
         "recommendation": (
             "Immediately inventory all software and identify end-of-life versions. "
@@ -640,18 +1001,41 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "A firewall is the gatekeeper between your internal network and the internet. "
+            "A firewall running on its factory default settings has not been configured "
+            "for your specific environment — it typically allows more inbound connections "
+            "than necessary and may leave administrative interfaces accessible from the "
+            "internet with default passwords still in place. Attackers use automated "
+            "scanning tools that continuously probe the entire internet looking for "
+            "misconfigured or default-credential devices. A router with a default admin "
+            "password can be taken over in seconds by a bot that found it through a "
+            "routine internet scan. Once an attacker controls your firewall or router, "
+            "they can redirect your traffic, access every device on your network, "
+            "and disable any security controls you have in place. "
+            "CISA guidance: https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-137a"
+        ),
         "business_impact": (
-            "A firewall running on factory default settings — or no firewall at all — "
-            "exposes all internal services directly to the internet. CISA and NSA "
-            "assessments of over 1,000 networks found default configurations are among "
-            "the top ten systemic weaknesses. Attackers routinely scan for default "
-            "router credentials and exposed admin interfaces as their first move."
+            "CISA and NSA's joint advisory AA23-278A, based on assessments of over 1,000 "
+            "networks, identified default configurations as one of the top ten most "
+            "common security weaknesses found across both government and private sector "
+            "organizations. A misconfigured or default-credential firewall is not a "
+            "theoretical risk; Shodan, a publicly accessible internet scanning service, "
+            "indexes millions of exposed devices with default credentials at any given "
+            "time. An attacker who gains control of your network perimeter device can "
+            "intercept all network traffic, redirect users to malicious sites, gain "
+            "access to every device behind the firewall, and maintain persistent access "
+            "that survives password changes on individual workstations. The cost of "
+            "full network remediation after a firewall compromise averages $200,000 to "
+            "$500,000 for small businesses, including forensic investigation, system "
+            "rebuilds, and business interruption. "
+            "Source: https://www.cisa.gov/news-events/cybersecurity-advisories/aa23-278a"
         ),
         "recommendation": (
             "Change all firewall and router admin passwords from defaults immediately. "
             "Disable remote management over the internet unless absolutely necessary. "
             "Block all inbound connections except those explicitly required. Enable "
-            "automatic firmware updates on your router. If you use an MSP, ask them "
+            "automatic firmware updates on your router. If you use a managed service provider (MSP), ask them "
             "to confirm your firewall configuration in writing."
         ),
         "references": [
@@ -677,13 +1061,35 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "An asset inventory is a simple list of every device and piece of software "
+            "used in your business: computers, servers, phones, printers, routers, "
+            "and the applications running on them. Without it, you have no baseline to "
+            "work from. You cannot patch what you don't know about, you cannot monitor "
+            "what you haven't identified, and you cannot protect a device you don't know "
+            "is connected to your network. Forgotten or decommissioned devices are "
+            "particularly dangerous as they are often running outdated, unpatched software "
+            "and remain connected to the network indefinitely without anyone noticing. "
+            "NIST explicitly identifies maintaining an asset inventory as the first and "
+            "most foundational step in any cybersecurity program. "
+            "NIST guidance: https://csrc.nist.gov/files/pubs/other/2022/02/24/getting-started-with-cybersecurity-risk-management/final/docs/quick-start-guide--ransomware.pdf"
+        ),
         "business_impact": (
-            "You cannot protect what you do not know exists. Without an asset inventory, "
-            "forgotten devices — old laptops, decommissioned servers, personal phones "
-            "with work email — remain connected to your network indefinitely, unpatched "
-            "and unmonitored. NIST's ransomware guidance explicitly lists maintaining "
-            "a hardware and software inventory as a foundational first step because "
-            "untracked assets are among the most common ransomware entry points."
+            "Every untracked device is a potential entry point that cannot be monitored "
+            "or protected. The Verizon 2024 DBIR found that asset management failures ( "
+            "including untracked and unpatched devices) were contributing factors in a "
+            "significant percentage of ransomware incidents. The practical business impact "
+            "is compounding: a business without an asset inventory cannot complete a "
+            "meaningful risk assessment, cannot verify that all devices are patched, "
+            "cannot confirm that former employees' devices have been wiped, and cannot "
+            "accurately scope a breach notification if an incident occurs. This last "
+            "point has direct financial consequences; if you cannot determine which "
+            "devices were affected in a breach, you must assume all devices were, "
+            "dramatically expanding the scope of required notification and the associated "
+            "cost of $125 to $175 per customer record. Maintaining a basic spreadsheet "
+            "asset inventory costs nothing and is the prerequisite for almost every other "
+            "security control. "
+            "Source: https://www.verizon.com/business/resources/reports/dbir/"
         ),
         "recommendation": (
             "Create a simple spreadsheet listing every device used for work: device type, "
@@ -713,13 +1119,31 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "A business continuity plan is a simple, documented answer to the question: "
+            "'What do we do if our computers stop working?' It does not need to be long "
+            "or complex, a single page covering who to call, how to communicate with "
+            "customers, how to process transactions manually if needed, and who has "
+            "authority to make decisions is enough to significantly reduce the chaos "
+            "and cost of an outage. Without one, every person in the organization is "
+            "improvising during a crisis, when improvising is most likely to result "
+            "in costly mistakes such as paying a ransom unnecessarily, delaying required "
+            "regulatory notifications, or making IT decisions that destroy forensic evidence. "
+            "NIST SP 1800-26 guidance: https://www.nccoe.nist.gov/data-integrity-detecting-and-responding-ransomware-and-other-destructive-events"
+        ),
         "business_impact": (
-            "Without a business continuity plan, a ransomware attack or major outage "
-            "leaves employees with no guidance on how to operate, who to contact, or "
-            "how to communicate with customers. NIST SP 1800-26 identifies the absence "
-            "of recovery planning as a multiplier of incident impact. For SMEs with "
-            "low downtime tolerance, unplanned outages lasting more than 48 hours "
-            "frequently result in permanent customer loss."
+            "NIST SP 1800-26 identifies the absence of a recovery plan as a primary "
+            "multiplier of incident cost and duration. Research consistently shows that "
+            "organizations with tested incident response plans contain breaches faster "
+            "and at significantly lower cost. The IBM Cost of a Data Breach 2024 report "
+            "found that organizations with an incident response team and regularly tested "
+            "plan saved an average of $1.49 million per breach compared to those without. "
+            "For small businesses, the most common failure mode is extended downtime: "
+            "without a plan, restoring systems from backup can take days instead of "
+            "hours, every additional hour of downtime has a direct revenue impact. "
+            "For a business generating $500,000 in annual revenue, each day of full "
+            "operational outage costs approximately $1,370 in lost revenue alone. "
+            "Source: https://www.ibm.com/reports/data-breach"
         ),
         "recommendation": (
             "Draft a one-page business continuity plan covering: how to operate without "
@@ -755,16 +1179,38 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
-        "business_impact": (
-            "Attackers purchase leaked credential databases from past breaches and "
-            "automatically test them against Microsoft 365, Google Workspace, and "
-            "cloud services. A 2024 CyberArk study found 49% of employees reuse "
+        "description": (
+            "Microsoft 365 and Google Workspace are among the most targeted platforms "
+            "for automated credential attacks because they hold everything: email, "
+            "files, contacts, calendars, financial integrations, and often administrative "
+            "access to other connected applications. Attackers continuously test billions "
+            "of leaked username and password combinations against the login portals of "
+            "these platforms. A 2024 CyberArk study found that 49% of employees reuse "
             "the same credentials across multiple work-related applications. Without "
-            "MFA on cloud services, a single reused password from any unrelated "
-            "data breach grants full access to email, files, and admin portals."
+            "multi-factor authentication, any employee whose password appears in a "
+            "leaked credential database, from any website, not just your own, is "
+            "immediately vulnerable. The attack is fully automated, runs around the clock, "
+            "and succeeds silently. "
+            "CISA MFA guidance: https://www.cisa.gov/MFA"
+        ),
+        "business_impact": (
+            "A successful Microsoft 365 or Google Workspace account takeover gives an "
+            "attacker immediate access to every email ever sent or received, every file "
+            "stored in OneDrive or Google Drive, every contact and calendar entry, and "
+            "any application connected via single sign-on. For most small businesses, "
+            "this represents the entirety of their business data and operations. "
+            "The IBM Cost of a Data Breach 2024 report found that compromised credentials "
+            "were the most common initial attack vector, with an average breach cost of "
+            "$4.81 million. For cloud-first SMEs where Microsoft 365 or Google Workspace "
+            "is the primary business system, a full account compromise can be operationally "
+            "equivalent to a complete network breach. Microsoft reports that enabling MFA "
+            "blocks over 99.9% of automated credential attacks, making it the single "
+            "highest-return security control available, at zero additional cost for "
+            "businesses already paying for these platforms. "
+            "Source: https://www.ibm.com/reports/data-breach"
         ),
         "recommendation": (
-            "Enable MFA on all cloud services immediately — especially Microsoft 365 "
+            "Enable MFA on all cloud services immediately, especially Microsoft 365 "
             "and Google Workspace. This single control blocks over 99% of automated "
             "credential attacks even when passwords are already compromised. Use an "
             "authenticator app (Microsoft Authenticator, Google Authenticator) rather "
@@ -801,18 +1247,39 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "low",
         "cvss_ui": "none",
+        "description": (
+            "An insider threat is any employee, contractor, or business partner who "
+            "misuses their legitimate access to cause harm — intentionally or accidentally. "
+            "For small businesses without formal access controls, most employees have "
+            "access to most business systems and data. A departing employee who knows "
+            "they are leaving, or who has been terminated, may copy customer lists, "
+            "pricing data, financial records, or trade secrets before their access is "
+            "revoked. This is particularly common in industries like professional services, "
+            "sales, and technology where customer relationships and intellectual property "
+            "are the core business assets. Insider threats are uniquely difficult to "
+            "detect because the access used is completely legitimate. "
+            "CISA insider threat guidance: https://www.cisa.gov/topics/physical-security/insider-threat-mitigation/defining-insider-threats"
+        ),
         "business_impact": (
-            "CISA defines insider threat as any person with authorized access who "
-            "intentionally or unintentionally causes harm. For SMEs with no formal "
-            "offboarding and broad access controls, a departing employee can exfiltrate "
-            "customer lists, financial data, or trade secrets in the days before leaving — "
-            "often without detection. Insider threats are particularly difficult to detect "
-            "because the access used is legitimate."
+            "The Ponemon Institute's 2022 Cost of Insider Threats Global Report found "
+            "that the average cost of an insider incident was $648,062, with incidents "
+            "involving credential theft averaging $804,997. For small businesses, insider "
+            "theft most commonly results in: loss of customer relationships when a "
+            "departing employee takes client data to a competitor, competitive harm when "
+            "pricing, proposals, or product plans are stolen, and legal liability when "
+            "customer PII is taken and subsequently breached at the recipient. "
+            "Verizon's Data Breach Investigation Report consistently finds that insiders are responsible for approximately "
+            "20% of breaches annually, and that small businesses are disproportionately "
+            "affected because they lack the monitoring controls to detect unauthorized "
+            "data access before it happens. Applying the principle of least privilege "
+            "(giving employees access only to what they need for their specific role) "
+            "is the primary control, and it costs nothing to implement. "
+            "Source: https://www.ponemon.org/research/ponemon-library/security/cost-of-insider-threats-global.html"
         ),
         "recommendation": (
             "Combine two controls: (1) Least privilege — employees should only ever "
             "have access to what their current role requires. (2) Immediate offboarding "
-            "— accounts disabled on the last day, no exceptions. CISA's insider threat "
+            ": accounts disabled on the last day, no exceptions. CISA's insider threat "
             "guidance recommends establishing a formal offboarding checklist that includes "
             "account revocation, device return, and access log review."
         ),
@@ -845,16 +1312,32 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "required",
+        "description": (
+            "Without proper email authentication records (SPF, DKIM, and DMARC) configured "
+            "for your domain, any person in the world can send an email that appears to "
+            "come from your exact email address. Your customers, vendors, and employees "
+            "will see your real domain name as the sender, they have no way to know the "
+            "email is fake. Attackers use this to send fraudulent invoices to your clients "
+            "in your name, impersonate your executives to your staff, and intercept "
+            "payments by redirecting them to attacker-controlled accounts. SPF, DKIM, and "
+            "DMARC are free DNS records that tell email servers how to verify that an "
+            "email actually came from you. Free tools like MXToolbox can check whether "
+            "they are configured: https://mxtoolbox.com/dmarc.aspx"
+        ),
         "business_impact": (
-            "Domain-based Message Authentication, Reporting, and Conformance (DMARC) is an essential email security "
-            "protocol that prevents attackers from spoofing a domain to send phishing or malicious emails."
-            "Without DMARC, attackers can send emails that appear to come from your "
-            "exact domain — your customers, partners, and employees will see your "
-            "real email address as the sender. This enables highly convincing invoice "
-            "fraud, supplier impersonation, and BEC attacks. The FBI IC3 2023 report "
-            "recorded 21,489 BEC complaints with over $2.9 billion in adjusted losses, "
-            "with phishing and spoofing representing over 298,000 complaints — the "
-            "most frequently reported crime category."
+            "The FBI IC3 2023 report recorded 21,489 BEC complaints, many enabled by "
+            "domain spoofing, with adjusted losses exceeding $2.9 billion. Email domain "
+            "spoofing is the primary technical enabler of invoice fraud, where attackers "
+            "send fake invoices to your customers appearing to come from your legitimate "
+            "address and directing payment to attacker-controlled bank accounts. Your "
+            "business bears the reputational and legal consequences even though you were "
+            "not the one who sent the fraudulent email. Customers who receive fraudulent "
+            "emails from your domain may hold your business liable for their losses, "
+            "particularly in B2B contexts governed by contracts that include reasonable "
+            "security obligations. Beyond fraud, an unprotected domain can be used to "
+            "mass-send spam or phishing emails, resulting in your domain being blacklisted "
+            "and your legitimate emails no longer being delivered. "
+            "Source: https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf"
         ),
         "recommendation": (
             "Configure SPF, DKIM, and DMARC DNS records for your email domain. "
@@ -865,7 +1348,7 @@ RISK_RULES = [
             "current configuration."
         ),
         "references": [
-            " https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf",
+            "https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf",
         ],
         "condition": lambda r: r.get("email_domain_auth") in [
             "We have an IT provider but I'm not sure if they've set this up",
@@ -887,18 +1370,37 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "When a computer, laptop, phone, or hard drive is discarded, sold, donated, "
+            "or traded in, a standard factory reset or quick format does not erase the "
+            "data. The files are removed from the directory but the actual data remains "
+            "on the disk until it is overwritten. Commercially available data recovery "
+            "software can reconstruct files, emails, photographs, "
+            "saved passwords, and browsing history from a 'wiped' drive in minutes. "
+            "NIST SP 800-88 defines approved methods for secure media sanitization that "
+            "actually prevent recovery. Secure erasure takes the same amount of time as "
+            "a standard format on most devices and completely eliminates the risk. "
+            "NIST SP 800-88: https://csrc.nist.gov/pubs/sp/800/88/r1/final"
+        ),
         "business_impact": (
-            "Standard factory resets and quick formats do not securely erase data — "
-            "commercial recovery tools can reconstruct files, emails, and credentials "
-            "from drives that appear wiped. Disposed devices sold, donated, or thrown "
-            "away without secure erasure are a documented source of PII exposure and "
-            "credential recovery. For businesses handling customer financial or health "
-            "data, this can trigger breach notification obligations even without a "
-            "network-based attack."
+            "For businesses that handle customer PII, financial data, or health information, "
+            "data recovered from improperly disposed devices constitutes a data breach "
+            "regardless of whether the data was intentionally accessed. This triggers "
+            "mandatory breach notification obligations under most state laws and federal "
+            "regulations. The average cost of notification is $125 to $175 per affected "
+            "record (IBM 2024). A single old laptop containing records for 2,000 customers "
+            "could generate $250,000 to $350,000 in notification and response costs from "
+            "what appeared to be a routine device disposal. Academic researchers and "
+            "security firms have repeatedly demonstrated this risk: a 2019 study by "
+            "Blancco found that 42% of second-hand hard drives purchased on eBay contained "
+            "recoverable data, including corporate documents, customer PII, and "
+            "financial records. Secure erasure tools are free and the process adds "
+            "minutes to the disposal workflow. "
+            "Source: https://csrc.nist.gov/pubs/sp/800/88/r1/final"
         ),
         "recommendation": (
             "Use NIST-approved secure erasure methods before disposing of any device: "
-            "DBAN for hard drives, or physical destruction for drives containing "
+            "DBAN (https://dban.org/) for hard drives, or physical destruction for drives containing "
             "highly sensitive data. For SSDs and flash storage, use manufacturer-provided "
             "secure erase tools or full disk encryption before disposal (encrypted data "
             "on a wiped drive is unrecoverable). Document all disposals."
@@ -933,15 +1435,35 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "required",
+        "description": (
+            "Phishing is an email designed to deceive the recipient into taking an action "
+            "that benefits the attacker: clicking a link that steals their password, "
+            "opening an attachment that installs malware, or approving a transaction they "
+            "believe is legitimate. Spearphishing is a targeted variant where the attacker "
+            "researches the business first, learning the names of executives, vendors, "
+            "and current projects, to craft a convincing, personalized message. A "
+            "spearphishing email might appear to come from the business owner asking an "
+            "employee to urgently process a payment, from an accountant asking for a "
+            "W-2 form, or from IT notifying that a password reset is required. These "
+            "emails are increasingly difficult to distinguish from legitimate ones. "
+            "FBI phishing data: https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf"
+        ),
         "business_impact": (
-            "Phishing is the most frequently reported cybercrime in the FBI IC3 2023 "
-            "report with over 298,000 complaints — accounting for approximately 34% of "
-            "all reported incidents. Spearphishing is a targeted variant where the "
-            "attacker researches the business first and crafts a convincing, personalized "
-            "message impersonating a known contact, vendor, or executive. A single "
-            "successful click can deliver ransomware, steal credentials, or initiate "
-            "a fraudulent wire transfer. Businesses with untrained employees and no "
-            "email filtering have no technical layer to compensate for human error."
+            "Phishing was the most frequently reported cybercrime in the FBI IC3 2023 "
+            "report, accounting for over 298,000 complaints, approximately 34% of all "
+            "reported cyber incidents. It is also the most common initial access vector "
+            "for ransomware, BEC fraud, and credential theft. A single successful phishing "
+            "click can result in any of the following: immediate ransomware deployment "
+            "across the entire network, credential theft leading to full account takeover, "
+            "a fraudulent wire transfer averaging $137,000 for BEC-related phishing, "
+            "or silent malware installation providing persistent network access. "
+            "The Verizon 2024 DBIR found phishing involved in 36% of all breaches. "
+            "Despite being the most common threat, it is also highly preventable: "
+            "technical email filtering combined with employee awareness training "
+            "significantly reduces successful phishing rates. Businesses with no "
+            "email filtering and no training have no technical or human layer of "
+            "defense against the most common attack vector in existence. "
+            "Source: https://www.ic3.gov/annualreport/reports/2023_IC3Report.pdf"
         ),
         "recommendation": (
             "Layer three controls together: (1) Technical — enable email filtering that "
@@ -985,13 +1507,36 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "Remote Desktop Protocol (RDP) is a built-in Windows feature that allows "
+            "someone to connect to and control a computer over the internet as if they "
+            "were sitting in front of it. When RDP is exposed directly to the internet "
+            "without a VPN or other protection layer, it is immediately visible to "
+            "automated scanning tools that continuously probe the entire internet looking "
+            "for open RDP ports. These tools then attempt to log in using lists of common "
+            "usernames and passwords, a process called brute-forcing, running thousands "
+            "of attempts per minute, around the clock. A weak password is all that stands "
+            "between an attacker and complete remote control of the target computer. "
+            "CISA identifies exposed RDP as one of the top initial access vectors for "
+            "ransomware operators. "
+            "CISA advisory: https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-137a"
+        ),
         "business_impact": (
-            "Remote Desktop Protocol (RDP) exposed directly to the internet is one of "
-            "the most commonly exploited entry points for ransomware. Attackers "
-            "continuously scan the internet for open RDP ports and use automated "
-            "brute force tools to guess weak passwords — no phishing or social "
-            "engineering required. CISA Advisory AA22-137A identifies exposed remote "
-            "services as a top initial access vector across assessed networks."
+            "CISA Advisory AA22-137A, based on assessments across hundreds of organizations, "
+            "identifies exposed remote services, particularly RDP, as the most common "
+            "initial access vector for ransomware attacks. Once an attacker successfully "
+            "logs into an exposed RDP session, they have full interactive control of that "
+            "computer with the privileges of the account they compromised. From that "
+            "position, attackers typically deploy ransomware across the entire network "
+            "within hours. The Sophos 2024 ransomware report found that RDP compromise "
+            "was responsible for 32% of ransomware incidents, with average recovery costs "
+            "of $2.73 million. Unlike phishing attacks that require an employee to make "
+            "a mistake, exposed RDP requires no human involvement to exploit — an attacker "
+            "can compromise an exposed RDP server at 3 AM on a Sunday with no one aware "
+            "until Monday morning when encrypted files are discovered. Placing RDP behind "
+            "a VPN eliminates this attack surface entirely and takes less than an hour "
+            "to configure. "
+            "Source: https://www.sophos.com/en-us/content/state-of-ransomware"
         ),
         "recommendation": (
             "Never expose RDP directly to the internet. Place it behind a VPN so that "
@@ -1029,13 +1574,35 @@ RISK_RULES = [
         "cvss_ac": "low",
         "cvss_pr": "none",
         "cvss_ui": "none",
+        "description": (
+            "Every service that is accessible from the internet (a website, a customer "
+            "portal, a file sharing server, remote desktop, email server, or VPN) is "
+            "a potential entry point that attackers can probe for vulnerabilities. When "
+            "three or more services are internet-exposed and the network perimeter is "
+            "protected only by a default or misconfigured firewall, the attack surface "
+            "becomes large and difficult to defend. Automated scanners operated by "
+            "criminal groups continuously probe the entire internet, cataloging every "
+            "exposed service and testing each one for known vulnerabilities, default "
+            "credentials, and unpatched software. A business with multiple exposed "
+            "services provides multiple independent opportunities for compromise, "
+            "only one needs to succeed. "
+            "CISA external exposure guidance: https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-137a"
+        ),
         "business_impact": (
-            "Every service exposed to the internet is a potential entry point. "
-            "Businesses exposing three or more services — website, email, file sharing, "
-            "client portal, remote desktop — with a misconfigured or default firewall "
-            "have a large, unmonitored attack surface. Attackers use automated scanners "
-            "to continuously probe all exposed services for known vulnerabilities, "
-            "default credentials, and unpatched software."
+            "CISA Advisory AA23-278A found that the presence of multiple internet-exposed "
+            "services with weak perimeter controls was one of the most consistent findings "
+            "across over 1,000 assessed networks. Each additional exposed service "
+            "multiplies the attack surface. A business with three exposed services and "
+            "a misconfigured firewall is not three times as exposed as a business with "
+            "one, it is exponentially more exposed, because each service may have "
+            "different vulnerabilities, different patch levels, and different credential "
+            "policies. Shodan, a public internet scanning service, indexes millions of "
+            "exposed business services at any given time, many of which are running "
+            "unpatched software with known vulnerabilities. The average cost of a breach "
+            "originating from an exposed public-facing application was $4.55 million "
+            "according to IBM's Cost of a Data Breach 2024 report, reflecting the broad system access "
+            "typically achieved through this vector. "
+            "Source: https://www.ibm.com/reports/data-breach"
         ),
         "recommendation": (
             "Audit every internet-exposed service and ask: does this need to be publicly "
