@@ -946,6 +946,14 @@ const FindingCard = ({ finding }) => {
           <div style={{ paddingTop: 14, display: "flex", flexDirection: "column", gap: 14 }}>
             <div>
               <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                Description
+              </div>
+              <p style={{ color: "#8a9eb0", fontSize: 14, fontFamily: "Georgia, serif", lineHeight: 1.6, margin: 0 }}>
+                {finding.description}
+              </p>
+            </div>
+            <div>
+              <div style={{ color: TEXT_MUT, fontSize: 10, fontFamily: "monospace", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.08em" }}>
                 Business Impact
               </div>
               <p style={{ color: "#8a9eb0", fontSize: 14, fontFamily: "Georgia, serif", lineHeight: 1.6, margin: 0 }}>

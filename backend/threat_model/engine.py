@@ -14,7 +14,7 @@ def generate_threat_model(responses: dict) -> dict:
                 "attack_technique": rule["attack_technique"],
                 "severity":         rule["severity"],
                 "likelihood":       rule["likelihood"],
-                "description":      rule.get("description", ""),   # ← add this line
+                "description":      rule["description"],   # ← add this line
                 "business_impact":  rule["business_impact"],
                 "recommendation":   rule["recommendation"],
                 "references":       rule.get("references", []),
