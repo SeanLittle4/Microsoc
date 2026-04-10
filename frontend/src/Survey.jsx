@@ -14,7 +14,7 @@ const GOLD      = "#c8922a";
 const TEXT_PRI  = "#e8ddd0";
 const TEXT_SEC  = "#8a9eb0";
 const TEXT_DIM  = "#8a9eb0";
-const TEXT_MUT  = "#2e4458";
+const TEXT_MUT  = "#65819c";
 const CRIT      = "#e05c5c";
 const HIGH_C    = "#e8a020";
 const MED_C     = "#5b8dd4";
@@ -501,7 +501,7 @@ const SECTIONS = [
     icon: "V",
     title: "Security Weaknesses & Configuration Gaps",
     subtitle:
-      "PASTA Stage 5 identifies specific vulnerabilities an attacker can exploit. Weak authentication, excess privilege, and poor patching are the top entry points for TA0006 and TA0004.",
+      "PASTA Stage 5 identifies specific vulnerabilities an attacker can exploit. Weak authentication, excess privilege, and poor patching are the top entry points for attackers.",
     questions: [
       {
         id: "mfa",
@@ -615,6 +615,28 @@ const SECTIONS = [
       "PASTA Stage 6 simulates realistic attack chains. Once inside, attackers move laterally, steal data, or deploy ransomware. These questions map how far they could go.",
     questions: [
       {
+        id: "logging",
+        pastaNote: "Login logs let you trace what happened during a breach. Without them, you may never know the full extent of a compromise",
+        text: "Does your business log or record who logs into systems, from where, and when?",
+        options: [
+          "Yes — login logs are collected and reviewed regularly",
+          "Yes — logs are collected but rarely if ever reviewed",
+          "No — we don't have login logging in place",
+          "I'm not sure",
+        ],
+      },
+      {
+        id: "anomaly_alerts",
+        pastaNote: "Absence of behavioral alerts allows attackers to operate undetected for an average of 197 days",
+        text: "Would you automatically receive an alert if someone logged into a business account from an unusual country, device, or at 3am?",
+        options: [
+          "Yes — we have alerts configured for suspicious or unusual logins",
+          "Possibly — our system might have this but I'm unsure if it's configured",
+          "No — we would have no automatic warning",
+          "I'm not sure",
+        ],
+      },
+      {
         id: "network_segmentation",
         pastaNote: "Flat networks allow attackers to reach all systems after a single endpoint compromise",
         text: "Are different parts of your network or cloud environment separated from each other?",
@@ -689,28 +711,6 @@ const SECTIONS = [
     subtitle:
       "PASTA Stage 7 translates technical threats into business impact. Attackers exploit poor visibility to stay hidden for weeks. This section identifies your detection gaps and real-world resilience.",
     questions: [
-      {
-        id: "logging",
-        pastaNote: "Login logs let you trace what happened during a breach. Without them, you may never know the full extent of a compromise",
-        text: "Does your business log or record who logs into systems, from where, and when?",
-        options: [
-          "Yes — login logs are collected and reviewed regularly",
-          "Yes — logs are collected but rarely if ever reviewed",
-          "No — we don't have login logging in place",
-          "I'm not sure",
-        ],
-      },
-      {
-        id: "anomaly_alerts",
-        pastaNote: "Absence of behavioral alerts allows attackers to operate undetected for an average of 197 days",
-        text: "Would you automatically receive an alert if someone logged into a business account from an unusual country, device, or at 3am?",
-        options: [
-          "Yes — we have alerts configured for suspicious or unusual logins",
-          "Possibly — our system might have this but I'm unsure if it's configured",
-          "No — we would have no automatic warning",
-          "I'm not sure",
-        ],
-      },
       {
         id: "incident_history",
         pastaNote: "Prior incidents indicate the organization is already in attacker databases as a viable target",
@@ -870,7 +870,7 @@ const Question = ({ q, qi, accentColor, answer, onAnswer, onToggle }) => (
         {q.text}
       </p>
       {q.hint && (
-        <p style={{ color: "#3a5568", fontSize: 13, fontStyle: "italic", margin: "0 0 10px", lineHeight: 1.5 }}>
+        <p style={{ color: "#4b6e85", fontSize: 13, fontStyle: "italic", margin: "0 0 10px", lineHeight: 1.5 }}>
           {q.hint}
         </p>
       )}
